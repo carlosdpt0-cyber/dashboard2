@@ -323,6 +323,14 @@ async function createTablesIfNotExist(connection) {
 }
 
 
+app.get('/', (req, res) => {
+res.send('OK from Hostinger');
+});
+
+app.get('/login', (req, res) => {
+res.send('LOGIN TEST OK');
+});
+
 
 // ==============================
 // CONFIGURAÇÃO DE ARMAZENAMENTO DE SESSÕES
