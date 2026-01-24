@@ -1078,7 +1078,49 @@ app.get('/fix-passwords', async (req, res) => {
     }
 });
 
+// ==============================
+// FUNÇÃO AUXILIAR PARA TEMPLATE
+// ==============================
 
+function timeAgo(timestamp) {
+    if (!timestamp) return 'tempo desconhecido';
+    
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) {
+            return 'agora mesmo';
+        } else if (diffMins < 60) {
+            return `há ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        } else if (diffHours < 24) {
+            return `há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        } else if (diffDays === 1) {
+            return 'ontem';
+        } else if (diffDays < 7) {
+            return `há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `há ${weeks} semana${weeks > 1 ? 's' : ''}`;
+        } else {
+            const months = Math.floor(diffDays / 30);
+            return `há ${months} mês${months > 1 ? 'es' : ''}`;
+        }
+    } catch (e) {
+        return 'tempo desconhecido';
+    }
+}
+
+// ==============================
+// MIDDLEWARE PARA ADICIONAR FUNÇÕES HELPERS AO EJS
+// ==============================
+
+// Adicione esta linha depois de app.set('view engine', 'ejs');
+app.locals.timeAgo = timeAgo;
 
 // ==============================
 // ROTAS DE NOTIFICAÇÕES
@@ -2281,11 +2323,12 @@ app.post('/profile/update', requireAuth, upload.single('photo'), async (req, res
 });
 
 // ==============================
-// DASHBOARD
+// FUNÇÃO PARA CALCULAR ESTATÍSTICAS DO DASHBOARD
 // ==============================
 
-app.get('/dashboard', requireAuth, async (req, res) => {
+async function getDashboardStats(req) {
     try {
+        // Dados básicos já existentes
         const totalUsersResult = await query('SELECT COUNT(*) as count FROM users WHERE isActive = 1');
         const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
         const onlineUsersResult = await query(
@@ -2302,14 +2345,221 @@ app.get('/dashboard', requireAuth, async (req, res) => {
             unresolvedAlerts: (await query('SELECT COUNT(*) as count FROM alerts WHERE isResolved = 0'))[0].count
         };
 
+        // Calcular tendências
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        // Tendência de jogadores online (comparação com ontem)
+        const yesterdayOnlineResult = await query(
+            'SELECT COUNT(*) as count FROM users WHERE lastLogin >= ? AND lastLogin < ? AND isActive = 1',
+            [new Date(yesterday.setHours(0, 0, 0, 0)), new Date()]
+        );
+        
+        const yesterdayOnline = yesterdayOnlineResult[0].count || 0;
+        stats.playerTrend = yesterdayOnline > 0 ? 
+            Math.round(((stats.onlinePlayers - yesterdayOnline) / yesterdayOnline) * 100) : 0;
+
+        // Valor total dos levantamentos pendentes
         const withdrawalsResult = await query(
             'SELECT SUM(amount) as total FROM withdrawals WHERE status = "pending"'
         );
-        
         stats.withdrawalsAmount = withdrawalsResult[0].total || 0;
+        
+        // Tendência de levantamentos
+        const yesterdayWithdrawalsResult = await query(
+            'SELECT SUM(amount) as total FROM withdrawals WHERE status = "pending" AND requestedAt >= ? AND requestedAt < ?',
+            [new Date(yesterday.setHours(0, 0, 0, 0)), new Date()]
+        );
+        const yesterdayWithdrawals = yesterdayWithdrawalsResult[0].total || 0;
+        stats.withdrawalTrend = yesterdayWithdrawals > 0 ? 
+            Math.round(((stats.withdrawalsAmount - yesterdayWithdrawals) / yesterdayWithdrawals) * 100) : 0;
+
+        // Percentagem de jogadores online
         stats.playerPercentage = stats.totalPlayers > 0 ? 
             Math.round((stats.onlinePlayers / stats.totalPlayers) * 100) : 0;
 
+        // Tickets atribuídos
+        stats.assignedTickets = (await query('SELECT COUNT(*) as count FROM support_tickets WHERE assignedToStaffId IS NOT NULL AND status = "in_progress"'))[0].count;
+
+        // Emails recentes
+        stats.recentEmails = (await query('SELECT COUNT(*) as count FROM email_logs WHERE sentAt >= ?', [new Date(Date.now() - 24 * 60 * 60 * 1000)]))[0].count;
+
+        // Logs não lidos
+        stats.unreadLogs = (await query('SELECT COUNT(*) as count FROM system_logs WHERE \`read\` = 0'))[0].count;
+
+        // === DADOS FINANCEIROS ADICIONAIS ===
+        
+        // Total de depósitos aprovados (últimos 30 dias)
+        const totalDepositsResult = await query(
+            'SELECT SUM(amount) as total FROM payments WHERE status = "approved" AND processedAt >= ?',
+            [new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)]
+        );
+        stats.totalDeposits = totalDepositsResult[0].total || 0;
+
+        // Média de depósito
+        const avgDepositResult = await query(
+            'SELECT AVG(amount) as avg FROM payments WHERE status = "approved"'
+        );
+        stats.avgDeposit = avgDepositResult[0].avg || 0;
+
+        // Taxa de conversão (estimada)
+        stats.conversionRate = stats.totalPlayers > 0 ? 
+            Math.round((stats.totalDeposits / stats.totalPlayers) * 100) / 100 : 0;
+
+        // Volume de apostas (simulado - seria do sistema de jogos)
+        stats.betVolume = stats.totalDeposits * 3; // Estimativa 3x o valor depositado
+
+        // Satisfação do jogador (simulado)
+        stats.playerSatisfaction = 8.5; // Valor fixo por enquanto
+
+        // === DADOS PARA CASH FLOW ===
+        
+        // Depósitos hoje
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const depositsTodayResult = await query(
+            'SELECT SUM(amount) as total FROM payments WHERE status = "approved" AND processedAt >= ?',
+            [todayStart]
+        );
+        const depositsToday = depositsTodayResult[0].total || 0;
+
+        // Levantamentos hoje
+        const withdrawalsTodayResult = await query(
+            'SELECT SUM(amount) as total FROM withdrawals WHERE status = "approved" AND processedAt >= ?',
+            [todayStart]
+        );
+        const withdrawalsToday = withdrawalsTodayResult[0].total || 0;
+
+        // Cash flow hoje
+        stats.cashFlow = {
+            today: {
+                deposits: depositsToday,
+                withdrawals: withdrawalsToday,
+                balance: depositsToday - withdrawalsToday
+            },
+            yesterday: {
+                deposits: 0, // Seria calculado com dados de ontem
+                withdrawals: 0,
+                balance: 0
+            }
+        };
+
+        // Ratio depósitos/levantamentos
+        stats.depositRatio = withdrawalsToday > 0 ? 
+            (depositsToday / withdrawalsToday).toFixed(2) : '∞';
+
+        // === DADOS DE MERCADO ===
+        
+        // Receita por país (exemplo - dados mockados)
+        stats.revenueData = {
+            markets: [
+                { country: 'Portugal', amount: 15000, transactions: 120 },
+                { country: 'Brasil', amount: 12000, transactions: 95 },
+                { country: 'Espanha', amount: 8000, transactions: 70 },
+                { country: 'Angola', amount: 6000, transactions: 50 },
+                { country: 'Moçambique', amount: 4000, transactions: 35 }
+            ],
+            total: 45000
+        };
+
+        // === DADOS DE JOGADORES ADICIONAIS ===
+        
+        // Jogadores VIP (níveis altos)
+        const vipPlayersResult = await query(
+            'SELECT COUNT(*) as count FROM users WHERE level IN ("VIP", "Gold", "Platinum", "Diamond") AND isActive = 1'
+        );
+        stats.vipPlayers = vipPlayersResult[0].count;
+
+        // Novos jogadores (últimos 7 dias)
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const newPlayersResult = await query(
+            'SELECT COUNT(*) as count FROM users WHERE createdAt >= ? AND isActive = 1',
+            [weekAgo]
+        );
+        stats.newPlayers7d = newPlayersResult[0].count;
+
+        // Saldo total dos jogadores
+        const totalBalanceResult = await query(
+            'SELECT SUM(balance) as total FROM users WHERE isActive = 1'
+        );
+        stats.totalBalance = totalBalanceResult[0].total || 0;
+
+        // Alertas críticos
+        stats.criticalAlerts = [];
+        
+        if (stats.pendingWithdrawals > 10) {
+            stats.criticalAlerts.push({
+                type: 'withdrawal',
+                severity: 'warning',
+                title: 'Levantamentos pendentes',
+                description: `${stats.pendingWithdrawals} levantamentos aguardam processamento`,
+                time: new Date()
+            });
+        }
+        
+        if (stats.cashFlow.today.balance < 0) {
+            stats.criticalAlerts.push({
+                type: 'cashflow',
+                severity: 'critical',
+                title: 'Cash Flow Negativo',
+                description: `Saldo negativo hoje: €${stats.cashFlow.today.balance.toFixed(2)}`,
+                time: new Date()
+            });
+        }
+        
+        if (stats.openTickets > 5) {
+            stats.criticalAlerts.push({
+                type: 'ticket',
+                severity: 'warning',
+                title: 'Muitos tickets abertos',
+                description: `${stats.openTickets} tickets abertos necessitam atenção`,
+                time: new Date()
+            });
+        }
+
+        return stats;
+    } catch (error) {
+        console.error('Erro ao calcular estatísticas do dashboard:', error);
+        return {
+            totalPlayers: 0,
+            onlinePlayers: 0,
+            pendingWithdrawals: 0,
+            pendingPayments: 0,
+            openTickets: 0,
+            unresolvedAlerts: 0,
+            withdrawalsAmount: 0,
+            playerPercentage: 0,
+            assignedTickets: 0,
+            recentEmails: 0,
+            unreadLogs: 0,
+            totalDeposits: 0,
+            avgDeposit: 0,
+            conversionRate: 0,
+            betVolume: 0,
+            playerSatisfaction: 8.5,
+            cashFlow: { today: { deposits: 0, withdrawals: 0, balance: 0 }, yesterday: { deposits: 0, withdrawals: 0, balance: 0 } },
+            depositRatio: '∞',
+            revenueData: { markets: [], total: 0 },
+            vipPlayers: 0,
+            newPlayers7d: 0,
+            totalBalance: 0,
+            criticalAlerts: [],
+            playerTrend: 0,
+            withdrawalTrend: 0
+        };
+    }
+}
+
+// ==============================
+// DASHBOARD
+// ==============================
+
+app.get('/dashboard', requireAuth, async (req, res) => {
+    try {
+        // Obter estatísticas avançadas
+        const stats = await getDashboardStats(req);
+
+        // Obter dados recentes (já existentes)
         const recentUsers = await query(
             'SELECT id, username, email, firstName, lastName, balance, lastLogin FROM users WHERE isActive = 1 ORDER BY lastLogin DESC LIMIT 5'
         );
@@ -2351,10 +2601,11 @@ app.get('/dashboard', requireAuth, async (req, res) => {
             [req.session.staff.id]
         );
 
+        // Renderizar dashboard com todos os dados
         res.render('dashboard', {
-            title: 'Dashboard - VelvetWin Admin',
+            title: 'Dashboard Essencial - VelvetWin Admin',
             breadcrumb: 'Dashboard',
-            stats,
+            stats: stats, // Agora inclui todos os dados
             recentPlayers,
             recentWithdrawals,
             recentPayments,
@@ -2368,7 +2619,32 @@ app.get('/dashboard', requireAuth, async (req, res) => {
                     [req.session.staff.id]
                 ))[0].count,
                 notifications: notifications
-            }
+            },
+            // Dados adicionais para o template
+            cashFlow: stats.cashFlow,
+            depositRatio: stats.depositRatio,
+            financialData: {
+                totalDeposits: stats.totalDeposits,
+                totalWithdrawals: stats.withdrawalsAmount,
+                pendingWithdrawals: stats.pendingWithdrawals,
+                avgDeposit: stats.avgDeposit,
+                avgWithdrawal: stats.withdrawalsAmount > 0 && stats.pendingWithdrawals > 0 
+                    ? (stats.withdrawalsAmount / stats.pendingWithdrawals).toFixed(2) 
+                    : 0,
+                conversionRate: stats.conversionRate,
+                holdRate: stats.totalDeposits > 0 
+                    ? (((stats.totalDeposits - stats.withdrawalsAmount) / stats.totalDeposits) * 100).toFixed(1)
+                    : 0
+            },
+            revenueData: stats.revenueData,
+            criticalAlerts: stats.criticalAlerts,
+            totalBalance: stats.totalBalance,
+            newPlayers7d: stats.newPlayers7d,
+            vipPlayers: stats.vipPlayers,
+            playerTrend: stats.playerTrend,
+            withdrawalTrend: stats.withdrawalTrend,
+            ticketTrend: 0, // Pode ser calculado se necessário
+            emailTrend: 0    // Pode ser calculado se necessário
         });
     } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
@@ -2385,7 +2661,15 @@ app.get('/dashboard', requireAuth, async (req, res) => {
                 openTickets: 0,
                 withdrawalsAmount: 0,
                 unresolvedAlerts: 0,
-                playerPercentage: 0
+                playerPercentage: 0,
+                assignedTickets: 0,
+                recentEmails: 0,
+                unreadLogs: 0,
+                totalDeposits: 0,
+                avgDeposit: 0,
+                conversionRate: 0,
+                betVolume: 0,
+                playerSatisfaction: 8.5
             },
             recentPlayers: [],
             recentWithdrawals: [],
@@ -2397,32 +2681,34 @@ app.get('/dashboard', requireAuth, async (req, res) => {
             notifications: {
                 unreadCount: 0,
                 notifications: []
-            }
+            },
+            cashFlow: { today: { deposits: 0, withdrawals: 0, balance: 0 }, yesterday: { deposits: 0, withdrawals: 0, balance: 0 } },
+            depositRatio: '∞',
+            financialData: {
+                totalDeposits: 0,
+                totalWithdrawals: 0,
+                pendingWithdrawals: 0,
+                avgDeposit: 0,
+                avgWithdrawal: 0,
+                conversionRate: 0,
+                holdRate: 0
+            },
+            revenueData: { markets: [], total: 0 },
+            criticalAlerts: [],
+            totalBalance: 0,
+            newPlayers7d: 0,
+            vipPlayers: 0,
+            playerTrend: 0,
+            withdrawalTrend: 0,
+            ticketTrend: 0,
+            emailTrend: 0
         });
     }
 });
 
 app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
     try {
-        const totalUsersResult = await query('SELECT COUNT(*) as count FROM users WHERE isActive = 1');
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-        const onlineUsersResult = await query(
-            'SELECT COUNT(*) as count FROM users WHERE lastLogin >= ? AND isActive = 1',
-            [fifteenMinutesAgo]
-        );
-
-        const stats = {
-            totalPlayers: totalUsersResult[0].count,
-            onlinePlayers: onlineUsersResult[0].count,
-            pendingWithdrawals: (await query('SELECT COUNT(*) as count FROM withdrawals WHERE status = "pending"'))[0].count,
-            pendingPayments: (await query('SELECT COUNT(*) as count FROM payments WHERE status = "pending"'))[0].count,
-            unresolvedAlerts: (await query('SELECT COUNT(*) as count FROM alerts WHERE isResolved = 0'))[0].count,
-            playerPercentage: totalUsersResult[0].count > 0 ? Math.round((onlineUsersResult[0].count / totalUsersResult[0].count) * 100) : 0
-        };
-
-        const withdrawalsResult = await query('SELECT SUM(amount) as total FROM withdrawals WHERE status = "pending"');
-        stats.withdrawalsAmount = withdrawalsResult[0].total || 0;
-
+        const stats = await getDashboardStats(req);
         res.json({ success: true, stats });
     } catch (error) {
         console.error('Erro ao buscar stats:', error);
@@ -2440,6 +2726,167 @@ app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
         });
     }
 });
+
+// ==============================
+// ROTAS DE EXPORTAÇÃO PARA BI
+// ==============================
+
+app.get('/api/export/players', requireAuth, requirePermission('view_players'), async (req, res) => {
+    try {
+        const players = await query(`
+            SELECT 
+                u.id, 
+                u.username, 
+                u.email, 
+                u.firstName, 
+                u.lastName,
+                u.balance,
+                u.bonusBalance,
+                u.level,
+                u.country,
+                u.totalWagered,
+                u.totalWins,
+                u.gamesPlayed,
+                u.lastLogin,
+                u.createdAt,
+                COUNT(DISTINCT p.id) as depositCount,
+                SUM(CASE WHEN p.status = 'approved' THEN p.amount ELSE 0 END) as totalDeposits,
+                COUNT(DISTINCT w.id) as withdrawalCount,
+                SUM(CASE WHEN w.status = 'approved' THEN w.amount ELSE 0 END) as totalWithdrawals
+            FROM users u
+            LEFT JOIN payments p ON u.id = p.playerId
+            LEFT JOIN withdrawals w ON u.id = w.playerId
+            WHERE u.isActive = 1
+            GROUP BY u.id
+            ORDER BY u.createdAt DESC
+        `);
+
+        // Converter para CSV
+        const csvData = players.map(player => ({
+            ID: player.id,
+            Username: player.username,
+            Email: player.email,
+            Nome: `${player.firstName || ''} ${player.lastName || ''}`.trim(),
+            Saldo: player.balance,
+            'Saldo Bónus': player.bonusBalance,
+            Nível: player.level,
+            País: player.country,
+            'Total Apostado': player.totalWagered,
+            'Total Ganhos': player.totalWins,
+            'Jogos Jogados': player.gamesPlayed,
+            'Último Login': player.lastLogin,
+            'Data Registo': player.createdAt,
+            'Nº Depósitos': player.depositCount,
+            'Total Depósitos': player.totalDeposits,
+            'Nº Levantamentos': player.withdrawalCount,
+            'Total Levantamentos': player.totalWithdrawals
+        }));
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=jogadores_export.csv');
+        
+        // Converter para CSV string
+        const csvString = objectToCSV(csvData);
+        res.send(csvString);
+
+    } catch (error) {
+        console.error('Erro ao exportar jogadores:', error);
+        res.status(500).json({ success: false, error: 'Erro ao exportar dados' });
+    }
+});
+
+app.get('/api/export/financial', requireAuth, requirePermission('view_payments', 'view_withdrawals'), async (req, res) => {
+    try {
+        const financialData = await query(`
+            SELECT 
+                'deposit' as type,
+                p.id,
+                p.playerName,
+                p.amount,
+                p.currency,
+                p.method,
+                p.status,
+                p.requestedAt,
+                p.processedAt,
+                p.bonusGiven,
+                NULL as fee,
+                NULL as netAmount
+            FROM payments p
+            WHERE p.createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            UNION ALL
+            SELECT 
+                'withdrawal' as type,
+                w.id,
+                w.playerName,
+                w.amount,
+                w.currency,
+                w.method,
+                w.status,
+                w.requestedAt,
+                w.processedAt,
+                NULL as bonusGiven,
+                w.fee,
+                w.netAmount
+            FROM withdrawals w
+            WHERE w.createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            ORDER BY requestedAt DESC
+        `);
+
+        const csvData = financialData.map(row => ({
+            Tipo: row.type === 'deposit' ? 'Depósito' : 'Levantamento',
+            ID: row.id,
+            Jogador: row.playerName,
+            Valor: row.amount,
+            Moeda: row.currency,
+            Método: row.method,
+            Status: row.status,
+            'Data Pedido': row.requestedAt,
+            'Data Processamento': row.processedAt,
+            'Bónus': row.bonusGiven || 0,
+            'Taxa': row.fee || 0,
+            'Valor Líquido': row.netAmount || row.amount
+        }));
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=financeiro_export.csv');
+        
+        const csvString = objectToCSV(csvData);
+        res.send(csvString);
+
+    } catch (error) {
+        console.error('Erro ao exportar dados financeiros:', error);
+        res.status(500).json({ success: false, error: 'Erro ao exportar dados' });
+    }
+});
+
+// Função auxiliar para converter objeto em CSV
+function objectToCSV(data) {
+    if (!data || data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    
+    for (const row of data) {
+        const values = headers.map(header => {
+            let value = row[header];
+            if (value === null || value === undefined) value = '';
+            if (typeof value === 'string') {
+                value = value.replace(/"/g, '""');
+                if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+                    value = `"${value}"`;
+                }
+            }
+            return value;
+        });
+        csvRows.push(values.join(','));
+    }
+    
+    return csvRows.join('\n');
+}
+
+// ==============================
+// ROTAS DE NOTIFICAÇÕES API
+// ==============================
 
 app.get('/api/notifications', requireAuth, async (req, res) => {
     try {
@@ -5050,13 +5497,26 @@ app.post('/api/logs/mark-read', requireAuth, async (req, res) => {
     }
 });
 
+// ==============================
+// ROTA DE EXPORTAÇÃO DE LOGS (APENAS UMA DEFINIÇÃO)
+// ==============================
+
 app.get('/api/logs/export', requireAuth, async (req, res) => {
     try {
         const format = req.query.format || 'csv';
         
+        // Verificar se o formato é válido
+        if (!['csv', 'json'].includes(format)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Formato não suportado. Use "csv" ou "json".'
+            });
+        }
+        
         let whereClause = '';
         let params = [];
         
+        // Aplicar filtros
         if (req.query.user) {
             whereClause += ' AND userId = ?';
             params.push(req.query.user);
@@ -5075,70 +5535,190 @@ app.get('/api/logs/export', requireAuth, async (req, res) => {
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
         
+        // Filtrar por data
         if (req.query.dateFrom || req.query.dateTo) {
             if (req.query.dateFrom) {
                 whereClause += ' AND timestamp >= ?';
-                params.push(new Date(req.query.dateFrom));
+                params.push(new Date(req.query.dateFrom + 'T00:00:00'));
             }
             if (req.query.dateTo) {
-                const dateTo = new Date(req.query.dateTo);
-                dateTo.setHours(23, 59, 59, 999);
                 whereClause += ' AND timestamp <= ?';
+                const dateTo = new Date(req.query.dateTo + 'T23:59:59');
                 params.push(dateTo);
             }
         }
         
         const where = whereClause ? `WHERE 1=1 ${whereClause}` : '';
 
+        console.log(`Exportando logs em formato ${format} com query: SELECT * FROM system_logs ${where}`, params);
+
         const logs = await query(
             `SELECT * FROM system_logs 
              ${where}
-             ORDER BY timestamp DESC`,
+             ORDER BY timestamp DESC
+             LIMIT 10000`, // Limitar para não sobrecarregar
             params
         );
         
+        console.log(`Encontrados ${logs.length} logs para exportação`);
+        
         if (format === 'csv') {
-            let csv = 'Data,Hora,Utilizador,Email,Cargo,Ação,Módulo,Mensagem,IP,Localização,User Agent\n';
+            // Cabeçalho CSV
+            const headers = [
+                'ID',
+                'Data/Hora',
+                'Utilizador',
+                'Email',
+                'Cargo',
+                'Ação',
+                'Módulo',
+                'Mensagem',
+                'Detalhes',
+                'IP',
+                'Localização',
+                'User Agent',
+                'Sessão ID'
+            ];
             
+            let csvContent = headers.join(';') + '\n';
+            
+            // Dados
             logs.forEach(log => {
                 const date = new Date(log.timestamp);
-                const dateStr = date.toLocaleDateString('pt-PT');
-                const timeStr = date.toLocaleTimeString('pt-PT');
+                const dateTime = date.toLocaleString('pt-PT');
                 
                 let userData = {};
                 try {
-                    userData = JSON.parse(log.user);
+                    userData = JSON.parse(log.user || '{}');
                 } catch (e) {
                     userData = {};
                 }
                 
-                csv += `"${dateStr}","${timeStr}","${userData.name || ''}","${userData.email || ''}","${userData.role || ''}","${log.action || ''}","${log.module || ''}","${log.message || ''}","${log.ip || ''}","${log.location || ''}","${log.userAgent || ''}"\n`;
+                const row = [
+                    log.id,
+                    `"${dateTime}"`,
+                    `"${(userData.name || 'Sistema').replace(/"/g, '""')}"`,
+                    `"${(userData.email || '').replace(/"/g, '""')}"`,
+                    `"${(userData.role || '').replace(/"/g, '""')}"`,
+                    `"${(log.action || '').replace(/"/g, '""')}"`,
+                    `"${(log.module || '').replace(/"/g, '""')}"`,
+                    `"${(log.message || '').replace(/"/g, '""')}"`,
+                    `"${(log.details || '').replace(/"/g, '""')}"`,
+                    `"${(log.ip || '').replace(/"/g, '""')}"`,
+                    `"${(log.location || '').replace(/"/g, '""')}"`,
+                    `"${(log.userAgent || '').replace(/"/g, '""')}"`,
+                    `"${(log.sessionId || '').replace(/"/g, '""')}"`
+                ];
+                
+                csvContent += row.join(';') + '\n';
             });
             
-            res.setHeader('Content-Type', 'text/csv');
-            res.setHeader('Content-Disposition', 'attachment; filename=logs.csv');
-            res.send(csv);
+            const filename = `logs_export_${new Date().toISOString().split('T')[0]}.csv`;
+            
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.send(csvContent);
             
         } else if (format === 'json') {
-            res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Content-Disposition', 'attachment; filename=logs.json');
-            res.json(logs);
+            // Processar logs para JSON formatado
+            const formattedLogs = logs.map(log => {
+                let userData = {};
+                try {
+                    userData = JSON.parse(log.user || '{}');
+                } catch (e) {
+                    userData = {};
+                }
+                
+                let metadata = {};
+                try {
+                    metadata = JSON.parse(log.metadata || '{}');
+                } catch (e) {
+                    metadata = {};
+                }
+                
+                return {
+                    id: log.id,
+                    timestamp: log.timestamp,
+                    user: {
+                        id: userData.id,
+                        name: userData.name,
+                        email: userData.email,
+                        role: userData.role
+                    },
+                    action: log.action,
+                    module: log.module,
+                    message: log.message,
+                    details: log.details,
+                    ip: log.ip,
+                    location: log.location,
+                    userAgent: log.userAgent,
+                    sessionId: log.sessionId,
+                    metadata: metadata,
+                    read: log.read
+                };
+            });
             
-        } else {
-            res.status(400).json({
-                success: false,
-                message: 'Formato não suportado'
+            const filename = `logs_export_${new Date().toISOString().split('T')[0]}.json`;
+            
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.json({
+                success: true,
+                count: formattedLogs.length,
+                exportedAt: new Date().toISOString(),
+                filters: {
+                    user: req.query.user || 'all',
+                    action: req.query.action || 'all',
+                    module: req.query.module || 'all',
+                    search: req.query.search || '',
+                    dateFrom: req.query.dateFrom || '',
+                    dateTo: req.query.dateTo || ''
+                },
+                logs: formattedLogs
             });
         }
         
     } catch (error) {
-        console.error('Error exporting logs:', error);
+        console.error('❌ Erro ao exportar logs:', error);
         res.status(500).json({
             success: false,
-            message: 'Erro ao exportar logs'
+            message: 'Erro ao exportar logs',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
+
+// Função auxiliar para converter dados para CSV
+function convertToCSV(data, delimiter = ';') {
+    if (!data || data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+    
+    // Cabeçalho
+    csvRows.push(headers.map(h => `"${h}"`).join(delimiter));
+    
+    // Dados
+    for (const row of data) {
+        const values = headers.map(header => {
+            let value = row[header];
+            if (value === null || value === undefined) {
+                value = '';
+            }
+            if (typeof value === 'string') {
+                // Escape aspas duplas e quebras de linha
+                value = value.replace(/"/g, '""');
+                if (value.includes(delimiter) || value.includes('\n') || value.includes('"')) {
+                    value = `"${value}"`;
+                }
+            }
+            return value;
+        });
+        csvRows.push(values.join(delimiter));
+    }
+    
+    return csvRows.join('\n');
+}
 
 app.post('/api/logs/cleanup', requireAuth, async (req, res) => {
     try {

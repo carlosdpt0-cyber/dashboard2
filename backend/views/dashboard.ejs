@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'B7Uno Casino | Dashboard Essencial' %></title>
+    <title><%= typeof title !== 'undefined' ? title : 'VelvetWin | Dashboard Essencial' %></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
@@ -492,17 +492,74 @@
             background: #ffc107;
             box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
         }
+        
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            max-width: 350px;
+        }
+        
+        .toast.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .toast.warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .toast.info {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        /* ===== MENU ITEM DISABLED ===== */
+        .menu-item-disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+        
+        .menu-item-disabled:hover {
+            background: transparent !important;
+            color: inherit !important;
+        }
     </style>
 </head>
 <body>
     <% 
-    // DECLARAÇÃO DE VARIÁVEIS COM DADOS REAIS DO SERVER.JS
+    // Dados vindos do server.js
     const localRecentPlayers = typeof recentPlayers !== 'undefined' ? recentPlayers : [];
     const localRecentWithdrawals = typeof recentWithdrawals !== 'undefined' ? recentWithdrawals : [];
     const localRecentTickets = typeof recentTickets !== 'undefined' ? recentTickets : [];
+    const localRecentAlerts = typeof recentAlerts !== 'undefined' ? recentAlerts : [];
     const localAcceptedConfidentiality = typeof acceptedConfidentiality !== 'undefined' ? acceptedConfidentiality : false;
 
-    // Stats com dados reais do server.js
+    // Stats com dados reais do server.js - corrigidos para usar dados reais
     const localStats = stats || {};
     const safeStats = {
         pendingWithdrawals: localStats.pendingWithdrawals || 0,
@@ -519,45 +576,15 @@
         avgDeposit: localStats.avgDeposit || 0,
         conversionRate: localStats.conversionRate || 0,
         betVolume: localStats.betVolume || 0,
-        playerSatisfaction: localStats.playerSatisfaction || 0
-    };
-    
-    // Calcular tendências baseadas em dados reais do server.js
-    const withdrawalTrend = localStats.withdrawalTrend || 0;
-    const playerTrend = localStats.playerTrend || 0;
-    const ticketTrend = localStats.ticketTrend || 0;
-    const emailTrend = localStats.emailTrend || 0;
-    
-    // DADOS PARA DASHBOARD ESSENCIAL
-    // Estes dados são calculados no server.js e passados aqui
-    
-    // Dados de cash flow diário
-    const cashFlow = {
-        today: {
-            deposits: safeStats.totalDeposits || 0,
-            withdrawals: safeStats.withdrawalsAmount || 0,
-            balance: (safeStats.totalDeposits || 0) - (safeStats.withdrawalsAmount || 0)
-        },
-        yesterday: {
-            deposits: 0, // Será calculado no server.js
-            withdrawals: 0,
-            balance: 0
-        }
-    };
-    
-    // Calcular crescimento do cash flow (simplificado)
-    const cashFlowGrowth = withdrawalTrend || 0;
-    
-    // Jogadores ativos (vem do server.js)
-    const activePlayers24h = safeStats.onlinePlayers || 0;
-    const totalPlayers = safeStats.totalPlayers || 0;
-    const playerGrowth = playerTrend || 0;
-    
-    // Tickets de suporte
-    const supportTickets = {
-        open: safeStats.openTickets || 0,
-        inProgress: safeStats.assignedTickets || 0,
-        resolved: 0 // Será calculado no server.js
+        playerSatisfaction: localStats.playerSatisfaction || 0,
+        playerTrend: localStats.playerTrend || 0,
+        withdrawalTrend: localStats.withdrawalTrend || 0,
+        cashFlow: localStats.cashFlow || { today: { deposits: 0, withdrawals: 0, balance: 0 }, yesterday: { deposits: 0, withdrawals: 0, balance: 0 } },
+        depositRatio: localStats.depositRatio || '∞',
+        revenueData: localStats.revenueData || { markets: [], total: 0 },
+        vipPlayers: localStats.vipPlayers || 0,
+        newPlayers7d: localStats.newPlayers7d || 0,
+        totalBalance: localStats.totalBalance || 0
     };
     
     // Dados financeiros
@@ -574,59 +601,6 @@
             ? (((safeStats.totalDeposits - safeStats.withdrawalsAmount) / safeStats.totalDeposits) * 100).toFixed(1)
             : 0
     };
-    
-    // Ratio depósitos/levantamentos
-    const depositRatio = safeStats.withdrawalsAmount > 0 
-        ? (safeStats.totalDeposits / safeStats.withdrawalsAmount).toFixed(2)
-        : '∞';
-    
-    // Receita por mercado (dados de exemplo - serão do server.js)
-    const revenueData = {
-        markets: [
-            { country: 'Portugal', amount: 15000, transactions: 120 },
-            { country: 'Brasil', amount: 12000, transactions: 95 },
-            { country: 'Espanha', amount: 8000, transactions: 70 },
-            { country: 'Angola', amount: 6000, transactions: 50 },
-            { country: 'Moçambique', amount: 4000, transactions: 35 }
-        ],
-        total: 45000
-    };
-    
-    // Alertas críticos
-    const criticalAlerts = [];
-    
-    // Adicionar alerta se houver tickets abertos
-    if (safeStats.openTickets > 5) {
-        criticalAlerts.push({
-            type: 'ticket',
-            severity: 'warning',
-            title: 'Muitos tickets abertos',
-            description: `${safeStats.openTickets} tickets abertos necessitam atenção`,
-            time: new Date()
-        });
-    }
-    
-    // Adicionar alerta se houver levantamentos pendentes
-    if (safeStats.pendingWithdrawals > 10) {
-        criticalAlerts.push({
-            type: 'withdrawal',
-            severity: 'warning',
-            title: 'Levantamentos pendentes',
-            description: `${safeStats.pendingWithdrawals} levantamentos aguardam processamento`,
-            time: new Date()
-        });
-    }
-    
-    // Adicionar alerta se cash flow negativo
-    if (cashFlow.today.balance < 0) {
-        criticalAlerts.push({
-            type: 'cashflow',
-            severity: 'critical',
-            title: 'Cash Flow Negativo',
-            description: `Saldo negativo hoje: €${cashFlow.today.balance.toFixed(2)}`,
-            time: new Date()
-        });
-    }
     
     // VERIFICAÇÃO DE PERMISSÕES CONFORME SERVER.JS
     const isAdmin = user && user.role === 'admin';
@@ -665,6 +639,7 @@
     // Determinar quais links de menu devem estar ativos
     const canViewPlayers = hasPermission('view_players');
     const canViewWithdrawals = hasPermission('view_withdrawals');
+    const canViewPayments = hasPermission('view_payments');
     const canViewSupport = hasPermission('view_support');
     const canViewEmail = hasPermission('view_email');
     const canViewStaff = hasPermission('view_staff');
@@ -678,7 +653,7 @@
         <div class="confidentiality-content">
             <i class="fas fa-shield-alt confidentiality-icon"></i>
             <h1 class="confidentiality-title">AVISO DE CONFIDENCIALIDADE</h1>
-            <h2 class="confidentiality-subtitle">B7UNO CASINO - DASHBOARD ESSENCIAL</h2>
+            <h2 class="confidentiality-subtitle">VELVETWIN - DASHBOARD ESSENCIAL</h2>
             <div class="confidentiality-text">
                 <p>Dashboard operacional para monitorização e ação imediata</p>
                 <div class="confidentiality-warning">
@@ -705,11 +680,11 @@
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="logo">
-                <h2>B7Uno <span class="b7uno-badge">ESSENCIAL</span></h2>
+                <h2>VelvetWin <span class="b7uno-badge">ESSENCIAL</span></h2>
                 <div class="user-mini-info">
                     <div class="user-mini-avatar" id="sidebarAvatar">
                         <% if (user && user.photo) { %>
-                            <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                            <img src="/profile-photos/<%= user.photo %>?t=<%= Date.now() %>" 
                                  alt="<%= user.name %>"
                                  onerror="handleAvatarError(this, 'sidebarAvatar')">
                         <% } else { %>
@@ -756,17 +731,45 @@
                 </a></li>
                 <% } %>
                 
+                <!-- Pagamentos -->
+                <% if (canViewPayments) { %>
+                <li><a href="/payments">
+                    <i class="fas fa-credit-card"></i><span> Pagamentos</span>
+                    <% if (localStats.pendingPayments > 0) { %>
+                        <span class="badge warning"><%= localStats.pendingPayments %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-credit-card"></i><span> Pagamentos</span>
+                </a></li>
+                <% } %>
+                
                 <!-- Suporte -->
                 <% if (canViewSupport) { %>
                 <li><a href="/support">
-                    <i class="fas fa-headset"></i><span> Support</span>
+                    <i class="fas fa-headset"></i><span> Suporte</span>
                     <% if (safeStats.openTickets > 0) { %>
                         <span class="badge warning"><%= safeStats.openTickets %></span>
                     <% } %>
                 </a></li>
                 <% } else { %>
                 <li><a href="#" class="menu-item-disabled" title="Sem permissão">
-                    <i class="fas fa-headset"></i><span> Support</span>
+                    <i class="fas fa-headset"></i><span> Suporte</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Staff -->
+                <% if (canViewStaff) { %>
+                <li><a href="/staff">
+                    <i class="fas fa-user-tie"></i><span> Staff</span>
+                    <% if (localStats.totalStaff && localStats.totalStaff > 0) { %>
+                        <span class="badge"><%= localStats.totalStaff %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-user-tie"></i><span> Staff</span>
                 </a></li>
                 <% } %>
                 
@@ -781,6 +784,31 @@
                 <% } else { %>
                 <li><a href="#" class="menu-item-disabled" title="Sem permissão">
                     <i class="fas fa-envelope"></i><span> Email</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Logs -->
+                <% if (canViewLogs) { %>
+                <li><a href="/logs">
+                    <i class="fas fa-history"></i><span> Logs</span>
+                    <% if (safeStats.unreadLogs > 0) { %>
+                        <span class="badge warning"><%= safeStats.unreadLogs %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-history"></i><span> Logs</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Definições -->
+                <% if (canViewSettings) { %>
+                <li><a href="/settings">
+                    <i class="fas fa-cog"></i><span> Definições</span>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-cog"></i><span> Definições</span>
                 </a></li>
                 <% } %>
                 
@@ -835,9 +863,10 @@
                     <div class="notifications">
                         <button class="notification-btn" id="notificationBtn">
                             <i class="fas fa-bell"></i>
-                            <% if (criticalAlerts.length > 0 || safeStats.unresolvedAlerts > 0) { %>
+                            <% const totalAlerts = safeStats.unresolvedAlerts + (localRecentAlerts ? localRecentAlerts.length : 0); %>
+                            <% if (totalAlerts > 0) { %>
                                 <span class="notification-count show">
-                                    <%= (criticalAlerts.length + safeStats.unresolvedAlerts) > 9 ? '9+' : (criticalAlerts.length + safeStats.unresolvedAlerts) %>
+                                    <%= totalAlerts > 9 ? '9+' : totalAlerts %>
                                 </span>
                             <% } %>
                         </button>
@@ -847,7 +876,7 @@
                     <div class="user-profile" id="userProfile">
                         <div class="user-avatar" id="userAvatar">
                             <% if (user && user.photo) { %>
-                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                <img src="/profile-photos/<%= user.photo %>?t=<%= Date.now() %>" 
                                      alt="<%= user.name %>" 
                                      id="userAvatarImage"
                                      onerror="handleAvatarError(this, 'userAvatar')">
@@ -864,13 +893,13 @@
                 </div>
             </div>
 
-            <!-- User Dropdown (MANTIDO IGUAL AO ORIGINAL) -->
+            <!-- User Dropdown -->
             <div class="user-dropdown" id="userDropdown">
                 <div class="dropdown-header">
                     <div class="user-info">
                         <div class="user-avatar" id="dropdownAvatar">
                             <% if (user && user.photo) { %>
-                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                <img src="/profile-photos/<%= user.photo %>?t=<%= Date.now() %>" 
                                      alt="<%= user.name %>" 
                                      id="dropdownAvatarImage"
                                      onerror="handleAvatarError(this, 'dropdownAvatar')">
@@ -932,43 +961,43 @@
                 <!-- ===== DASHBOARD ESSENCIAL ===== -->
                 <div class="dashboard-essencial">
                     <!-- Cash Flow Diário -->
-                    <div class="essencial-card <%= cashFlow.today.balance < 0 ? 'critical' : '' %>"
-                         onclick="window.location.href='<%= canViewWithdrawals ? '/withdrawals' : '#' %>'">
+                    <div class="essencial-card <%= safeStats.cashFlow.today.balance < 0 ? 'critical' : '' %>"
+                         onclick="canViewWithdrawals ? window.location.href='/withdrawals' : showNoPermissionToast()">
                         <div class="essencial-header">
                             <div class="essencial-icon cash">
                                 <i class="fas fa-money-bill-wave"></i>
                             </div>
-                            <div class="trend <%= cashFlowGrowth >= 0 ? '' : 'down' %>">
-                                <i class="fas fa-arrow-<%= cashFlowGrowth >= 0 ? 'up' : 'down' %>"></i>
-                                <%= Math.abs(cashFlowGrowth) %>%
+                            <div class="trend <%= safeStats.withdrawalTrend >= 0 ? '' : 'down' %>">
+                                <i class="fas fa-arrow-<%= safeStats.withdrawalTrend >= 0 ? 'up' : 'down' %>"></i>
+                                <%= Math.abs(safeStats.withdrawalTrend) %>%
                             </div>
                         </div>
                         <div class="essencial-title">Cash Flow Diário</div>
-                        <div class="essencial-value <%= cashFlow.today.balance >= 0 ? '' : 'critical' %>">
-                            €<%= cashFlow.today.balance.toFixed(2) %>
+                        <div class="essencial-value <%= safeStats.cashFlow.today.balance >= 0 ? '' : 'critical' %>">
+                            €<%= safeStats.cashFlow.today.balance.toFixed(2) %>
                         </div>
                         <div class="essencial-details">
-                            <span>Entradas: €<%= cashFlow.today.deposits.toFixed(2) %></span>
+                            <span>Entradas: €<%= safeStats.cashFlow.today.deposits.toFixed(2) %></span>
                             <span>|</span>
-                            <span>Saídas: €<%= cashFlow.today.withdrawals.toFixed(2) %></span>
+                            <span>Saídas: €<%= safeStats.cashFlow.today.withdrawals.toFixed(2) %></span>
                         </div>
                     </div>
 
                     <!-- Depósitos vs Levantamentos -->
                     <div class="essencial-card" 
-                         onclick="window.location.href='<%= canViewWithdrawals ? '/withdrawals' : '#' %>'">
+                         onclick="canViewWithdrawals ? window.location.href='/withdrawals' : showNoPermissionToast()">
                         <div class="essencial-header">
                             <div class="essencial-icon">
                                 <i class="fas fa-exchange-alt"></i>
                             </div>
-                            <div class="trend <%= depositRatio !== '∞' && parseFloat(depositRatio) >= 1.5 ? '' : 'down' %>">
-                                <i class="fas fa-<%= depositRatio !== '∞' && parseFloat(depositRatio) >= 1.5 ? 'check' : 'exclamation' %>"></i>
-                                Ratio: <%= depositRatio %>
+                            <div class="trend <%= safeStats.depositRatio !== '∞' && parseFloat(safeStats.depositRatio) >= 1.5 ? '' : 'down' %>">
+                                <i class="fas fa-<%= safeStats.depositRatio !== '∞' && parseFloat(safeStats.depositRatio) >= 1.5 ? 'check' : 'exclamation' %>"></i>
+                                Ratio: <%= safeStats.depositRatio %>
                             </div>
                         </div>
                         <div class="essencial-title">Depósitos / Levantamentos</div>
                         <div class="essencial-value">
-                            <%= depositRatio %>:1
+                            <%= safeStats.depositRatio %>:1
                         </div>
                         <div class="essencial-details">
                             <span style="color: #28a745;">+€<%= financialData.totalDeposits.toFixed(2) %></span>
@@ -979,62 +1008,63 @@
 
                     <!-- Jogadores Ativos -->
                     <div class="essencial-card" 
-                         onclick="window.location.href='<%= canViewPlayers ? '/players' : '#' %>'">
+                         onclick="canViewPlayers ? window.location.href='/players' : showNoPermissionToast()">
                         <div class="essencial-header">
                             <div class="essencial-icon players">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <div class="trend <%= playerGrowth >= 0 ? '' : 'down' %>">
-                                <i class="fas fa-arrow-<%= playerGrowth >= 0 ? 'up' : 'down' %>"></i>
-                                <%= Math.abs(playerGrowth) %>%
+                            <div class="trend <%= safeStats.playerTrend >= 0 ? '' : 'down' %>">
+                                <i class="fas fa-arrow-<%= safeStats.playerTrend >= 0 ? 'up' : 'down' %>"></i>
+                                <%= Math.abs(safeStats.playerTrend) %>%
                             </div>
                         </div>
                         <div class="essencial-title">Jogadores Ativos (24h)</div>
-                        <div class="essencial-value"><%= activePlayers24h %></div>
+                        <div class="essencial-value"><%= safeStats.onlinePlayers %></div>
                         <div class="essencial-details">
                             <span class="status-dot online"></span>
-                            <span>Online: <%= activePlayers24h %></span>
+                            <span>Online: <%= safeStats.onlinePlayers %></span>
                             <span>|</span>
-                            <span>Total: <%= totalPlayers %></span>
+                            <span>Total: <%= safeStats.totalPlayers %></span>
                         </div>
                     </div>
 
                     <!-- Tickets de Suporte -->
-                    <div class="essencial-card <%= supportTickets.open > 5 ? 'warning' : '' %>"
-                         onclick="window.location.href='<%= canViewSupport ? '/support' : '#' %>'">
+                    <div class="essencial-card <%= safeStats.openTickets > 5 ? 'warning' : '' %>"
+                         onclick="canViewSupport ? window.location.href='/support' : showNoPermissionToast()">
                         <div class="essencial-header">
                             <div class="essencial-icon support">
                                 <i class="fas fa-headset"></i>
                             </div>
-                            <div class="trend <%= supportTickets.open > 0 ? 'down' : '' %>">
-                                <i class="fas fa-<%= supportTickets.open > 0 ? 'exclamation' : 'check' %>"></i>
-                                <%= supportTickets.open %> pendentes
+                            <div class="trend <%= safeStats.openTickets > 0 ? 'down' : '' %>">
+                                <i class="fas fa-<%= safeStats.openTickets > 0 ? 'exclamation' : 'check' %>"></i>
+                                <%= safeStats.openTickets %> pendentes
                             </div>
                         </div>
                         <div class="essencial-title">Tickets de Suporte</div>
-                        <div class="essencial-value"><%= supportTickets.open + supportTickets.inProgress %></div>
+                        <div class="essencial-value"><%= safeStats.openTickets + safeStats.assignedTickets %></div>
                         <div class="essencial-details">
-                            <span class="badge <%= supportTickets.open > 5 ? 'warning' : 'success' %>">
-                                <%= supportTickets.open %> abertos
+                            <span class="badge <%= safeStats.openTickets > 5 ? 'warning' : 'success' %>">
+                                <%= safeStats.openTickets %> abertos
                             </span>
                             <span class="badge info">
-                                <%= supportTickets.inProgress %> em progresso
+                                <%= safeStats.assignedTickets %> em progresso
                             </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- ===== RECEITA POR MERCADO ===== -->
+                <% if (safeStats.revenueData && safeStats.revenueData.markets && safeStats.revenueData.markets.length > 0) { %>
                 <div class="market-revenue">
                     <div class="section-header">
                         <h3><i class="fas fa-globe-europe"></i> Receita por Mercado (Últimos 30 dias)</h3>
                         <div style="font-size: 14px; color: var(--text-secondary);">
-                            Total: €<%= revenueData.total.toFixed(2) %>
+                            Total: €<%= safeStats.revenueData.total.toFixed(2) %>
                         </div>
                     </div>
                     
                     <div class="revenue-grid">
-                        <% revenueData.markets.forEach((market, index) => { 
+                        <% safeStats.revenueData.markets.forEach((market, index) => { 
                             const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'];
                         %>
                             <div class="market-item">
@@ -1052,26 +1082,27 @@
                         <% }) %>
                     </div>
                 </div>
+                <% } %>
 
                 <!-- ===== ALERTAS CRÍTICOS ===== -->
-                <% if (criticalAlerts.length > 0) { %>
+                <% if (localRecentAlerts && localRecentAlerts.length > 0) { %>
                 <div class="alerts-section">
                     <div class="section-header">
                         <h3><i class="fas fa-exclamation-triangle"></i> Alertas Críticos</h3>
-                        <span class="badge critical"><%= criticalAlerts.length %></span>
+                        <span class="badge critical"><%= localRecentAlerts.length %></span>
                     </div>
                     
                     <div class="alert-list">
-                        <% criticalAlerts.slice(0, 3).forEach((alert) => { %>
-                            <div class="alert-item <%= alert.severity %>">
-                                <div class="alert-icon <%= alert.severity %>">
+                        <% localRecentAlerts.slice(0, 3).forEach((alert) => { %>
+                            <div class="alert-item <%= alert.severity === 'critical' ? 'critical' : 'warning' %>">
+                                <div class="alert-icon <%= alert.severity === 'critical' ? 'critical' : 'warning' %>">
                                     <i class="fas fa-<%= alert.severity === 'critical' ? 'exclamation' : 'exclamation-triangle' %>"></i>
                                 </div>
                                 <div class="alert-content">
                                     <div class="alert-title"><%= alert.title %></div>
-                                    <div class="alert-desc"><%= alert.description %></div>
+                                    <div class="alert-desc"><%= alert.message %></div>
                                     <div class="alert-time">
-                                        <%= new Date(alert.time).toLocaleString('pt-PT', {
+                                        <%= new Date(alert.createdAt).toLocaleString('pt-PT', {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             day: '2-digit',
@@ -1079,12 +1110,6 @@
                                         }) %>
                                     </div>
                                 </div>
-                                <% if (alert.type === 'ticket' && canViewSupport) { %>
-                                    <button class="btn-view-all" onclick="window.location.href='/support'" 
-                                            style="padding: 8px 16px; font-size: 12px; white-space: nowrap;">
-                                        Ver Ticket
-                                    </button>
-                                <% } %>
                             </div>
                         <% }) %>
                     </div>
@@ -1103,11 +1128,7 @@
                             <div class="data-row">
                                 <div class="data-label">Saldo Total Jogadores</div>
                                 <div class="data-value">
-                                    <% 
-                                        // Este valor virá do server.js
-                                        const totalBalance = 0; // Será calculado no server.js
-                                    %>
-                                    €<%= totalBalance.toFixed(2) %>
+                                    €<%= safeStats.totalBalance.toFixed(2) %>
                                 </div>
                             </div>
                             
@@ -1118,7 +1139,7 @@
                             
                             <div class="data-row">
                                 <div class="data-label">Média Levantamento</div>
-                                <div class="data-value">€<%= financialData.avgWithdrawal.toFixed(2) %></div>
+                                <div class="data-value">€<%= financialData.avgWithdrawal %></div>
                             </div>
                             
                             <div class="data-row">
@@ -1146,28 +1167,20 @@
                         <div class="data-table">
                             <div class="data-row">
                                 <div class="data-label">Total Jogadores</div>
-                                <div class="data-value"><%= totalPlayers %></div>
+                                <div class="data-value"><%= safeStats.totalPlayers %></div>
                             </div>
                             
                             <div class="data-row">
                                 <div class="data-label">Novos (7 dias)</div>
                                 <div class="data-value">
-                                    <% 
-                                        // Este valor virá do server.js
-                                        const newPlayers7d = 0; // Será calculado no server.js
-                                    %>
-                                    <%= newPlayers7d %>
+                                    <%= safeStats.newPlayers7d %>
                                 </div>
                             </div>
                             
                             <div class="data-row">
                                 <div class="data-label">Jogadores VIP</div>
                                 <div class="data-value">
-                                    <% 
-                                        // Este valor virá do server.js
-                                        const vipPlayers = 0; // Será calculado no server.js
-                                    %>
-                                    <%= vipPlayers %>
+                                    <%= safeStats.vipPlayers %>
                                 </div>
                             </div>
                             
@@ -1176,7 +1189,7 @@
                                 <div class="data-value">
                                     <% 
                                         // ARPU = Average Revenue Per User
-                                        const arpu = totalPlayers > 0 ? (revenueData.total / totalPlayers).toFixed(2) : '0.00';
+                                        const arpu = safeStats.totalPlayers > 0 ? (safeStats.revenueData.total / safeStats.totalPlayers).toFixed(2) : '0.00';
                                     %>
                                     €<%= arpu %>
                                 </div>
@@ -1271,7 +1284,7 @@
                         </div>
                         <div class="action-text">
                             <div class="action-title">Atender Suporte</div>
-                            <div class="action-desc"><%= supportTickets.open %> tickets abertos</div>
+                            <div class="action-desc"><%= safeStats.openTickets %> tickets abertos</div>
                         </div>
                     </div>
                     <% } %>
@@ -1293,10 +1306,10 @@
     <!-- JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎰 Dashboard Essencial B7Uno - Carregado');
+            console.log('🎰 Dashboard Essencial VelvetWin - Carregado');
             
             // Verificação dos termos
-            const hasAccepted = localStorage.getItem('b7uno_terms_accepted');
+            const hasAccepted = localStorage.getItem('velvetwin_terms_accepted');
             const serverAccepted = <%= localAcceptedConfidentiality %>;
             
             if (hasAccepted === 'true' || serverAccepted) {
@@ -1331,10 +1344,30 @@
             const rejectBtn = document.getElementById('rejectConfidentiality');
             
             if (acceptBtn) {
-                acceptBtn.addEventListener('click', function(e) {
+                acceptBtn.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    localStorage.setItem('b7uno_terms_accepted', 'true');
-                    showDashboard();
+                    
+                    try {
+                        const response = await fetch('/api/confidentiality/accept', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            localStorage.setItem('velvetwin_terms_accepted', 'true');
+                            showDashboard();
+                            showToast('✅ Termos aceitos com sucesso!', 'success');
+                        } else {
+                            showToast('❌ Erro ao aceitar termos', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro:', error);
+                        showToast('❌ Erro de conexão', 'error');
+                    }
                 });
             }
             
@@ -1350,8 +1383,14 @@
         
         function initDashboard() {
             // Configurar tema
-            const savedTheme = localStorage.getItem('casinoX-theme') || 'dark';
+            const savedTheme = localStorage.getItem('velvetwin-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Atualizar checkbox do tema
+            const isDark = savedTheme === 'dark';
+            document.querySelectorAll('.theme-toggle input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = isDark;
+            });
             
             // Configurar eventos
             setupEvents();
@@ -1369,33 +1408,38 @@
             if (menuToggle) {
                 menuToggle.addEventListener('click', function() {
                     const sidebar = document.getElementById('sidebar');
-                    const overlay = document.getElementById('overlay');
-                    
-                    if (window.innerWidth <= 1024) {
-                        sidebar.classList.toggle('active');
-                        overlay.classList.toggle('active');
-                    } else {
-                        sidebar.classList.toggle('collapsed');
-                    }
+                    sidebar.classList.toggle('collapsed');
                 });
             }
             
             // Theme toggles
             document.querySelectorAll('.theme-toggle').forEach(toggle => {
-                toggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-                    const newTheme = current === 'dark' ? 'light' : 'dark';
-                    
-                    document.documentElement.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('casinoX-theme', newTheme);
-                    
-                    // Atualizar labels
-                    document.querySelectorAll('#sidebarThemeLabel, #topbarThemeLabel').forEach(label => {
-                        label.textContent = newTheme === 'light' ? 'Modo Claro' : 'Modo Escuro';
+                const checkbox = toggle.querySelector('input[type="checkbox"]');
+                const label = toggle.querySelector('.theme-label');
+                
+                if (checkbox) {
+                    checkbox.addEventListener('change', function(e) {
+                        e.stopPropagation();
+                        const newTheme = this.checked ? 'dark' : 'light';
+                        
+                        document.documentElement.setAttribute('data-theme', newTheme);
+                        localStorage.setItem('velvetwin-theme', newTheme);
+                        
+                        // Atualizar labels
+                        document.querySelectorAll('#sidebarThemeLabel, #topbarThemeLabel').forEach(lbl => {
+                            lbl.textContent = newTheme === 'dark' ? 'Modo Escuro' : 'Modo Claro';
+                        });
+                        
+                        showToast(`Modo ${newTheme === 'dark' ? 'Escuro' : 'Claro'} ativado`, 'info');
                     });
-                    
-                    showToast(`Modo ${newTheme === 'light' ? 'Claro' : 'Escuro'} ativado`, 'info');
+                }
+                
+                // Também permitir clicar em toda a área do toggle
+                toggle.addEventListener('click', function(e) {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
                 });
             });
             
@@ -1431,66 +1475,111 @@
             const notificationBtn = document.getElementById('notificationBtn');
             if (notificationBtn) {
                 notificationBtn.addEventListener('click', function() {
-                    const count = <%= criticalAlerts.length + safeStats.unresolvedAlerts %>;
+                    const count = <%= safeStats.unresolvedAlerts %>;
                     if (count > 0) {
-                        showToast(`🔔 ${count} alerta${count > 1 ? 's' : ''} encontrado${count > 1 ? 's' : ''}`, 'warning');
+                        window.location.href = '/logs';
                     } else {
                         showToast('✅ Sem alertas no momento', 'success');
                     }
                 });
             }
             
-            // Refresh dashboard
-            window.refreshDashboard = function() {
-                showToast('🔄 Atualizando dados...', 'info');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            };
+            // Verificar aceitação dos termos do servidor
+            checkServerConfidentiality();
+        }
+        
+        async function checkServerConfidentiality() {
+            try {
+                const response = await fetch('/api/confidentiality/status');
+                const data = await response.json();
+                
+                if (data.success && data.accepted) {
+                    localStorage.setItem('velvetwin_terms_accepted', 'true');
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+            }
         }
         
         function setupExport() {
             // Export Players
-            document.getElementById('exportPlayers')?.addEventListener('click', function() {
-                exportData('Detalhes Jogadores', 'players_export.csv');
+            document.getElementById('exportPlayers')?.addEventListener('click', async function() {
+                if (!<%= canViewPlayers %>) {
+                    showNoPermissionToast();
+                    return;
+                }
+                
+                try {
+                    showToast('📥 Exportando dados de jogadores...', 'info');
+                    const response = await fetch('/api/export/players');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'jogadores_export.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        showToast('✅ Dados de jogadores exportados com sucesso!', 'success');
+                    } else {
+                        throw new Error('Erro na exportação');
+                    }
+                } catch (error) {
+                    console.error('Erro ao exportar:', error);
+                    showToast('❌ Erro ao exportar dados', 'error');
+                }
             });
             
             // Export Financial
-            document.getElementById('exportFinancial')?.addEventListener('click', function() {
-                exportData('Histórico Financeiro', 'financial_export.csv');
+            document.getElementById('exportFinancial')?.addEventListener('click', async function() {
+                if (!<%= canViewWithdrawals %> && !<%= canViewPayments %>) {
+                    showNoPermissionToast();
+                    return;
+                }
+                
+                try {
+                    showToast('📥 Exportando dados financeiros...', 'info');
+                    const response = await fetch('/api/export/financial');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'financeiro_export.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        showToast('✅ Dados financeiros exportados com sucesso!', 'success');
+                    } else {
+                        throw new Error('Erro na exportação');
+                    }
+                } catch (error) {
+                    console.error('Erro ao exportar:', error);
+                    showToast('❌ Erro ao exportar dados', 'error');
+                }
             });
             
-            // Export Marketing
+            // Export Marketing (placeholder)
             document.getElementById('exportMarketing')?.addEventListener('click', function() {
-                exportData('Dados Marketing', 'marketing_export.csv');
+                showToast('⚠️ Exportação de marketing em desenvolvimento', 'warning');
             });
             
-            // Export Games
+            // Export Games (placeholder)
             document.getElementById('exportGames')?.addEventListener('click', function() {
-                exportData('Performance Jogos', 'games_export.csv');
+                showToast('⚠️ Exportação de jogos em desenvolvimento', 'warning');
             });
         }
         
-        function exportData(title, filename) {
-            showToast(`📥 Exportando ${title}...`, 'info');
-            
-            // Simular exportação
+        // Refresh dashboard
+        window.refreshDashboard = function() {
+            showToast('🔄 Atualizando dados...', 'info');
             setTimeout(() => {
-                // Criar dados CSV de exemplo
-                const data = `Mercado,Receita,Jogadores,Depósitos,Levantamentos\nPT,15000,120,18000,3000\nBR,12000,95,15000,3000\nES,8000,70,10000,2000`;
-                const blob = new Blob([data], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                showToast(`✅ ${title} exportado com sucesso!`, 'success');
-            }, 1500);
-        }
+                window.location.reload();
+            }, 1000);
+        };
         
         function startClock() {
             function updateTime() {
@@ -1535,17 +1624,44 @@
             }, 5000);
         }
         
+        function showNoPermissionToast() {
+            showToast('❌ Você não tem permissão para acessar esta funcionalidade', 'error');
+        }
+        
         function handleAvatarError(imgElement, containerId) {
             const container = document.getElementById(containerId);
             if (container) {
-                container.innerHTML = '<i class="fas fa-user-tie"></i>';
+                // Verificar se é uma imagem ou um container
+                if (container.classList.contains('user-avatar') || container.classList.contains('user-mini-avatar')) {
+                    // Mostrar iniciais
+                    const name = '<%= user.name %>';
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                    container.innerHTML = `<span>${initials}</span>`;
+                    container.style.display = 'flex';
+                    container.style.alignItems = 'center';
+                    container.style.justifyContent = 'center';
+                    container.style.backgroundColor = 'var(--accent-primary)';
+                    container.style.color = 'white';
+                    container.style.fontWeight = 'bold';
+                } else {
+                    // Para outros containers, mostrar ícone padrão
+                    container.innerHTML = '<i class="fas fa-user-tie"></i>';
+                }
             }
         }
         
         // Auto-refresh a cada 60 segundos
         setInterval(() => {
             console.log('🔄 Auto-refresh do dashboard');
-            // Aqui poderia fazer uma requisição para atualizar apenas os dados
+            // Atualizar apenas dados específicos via AJAX
+            fetch('/api/dashboard/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Dados atualizados:', data.stats);
+                    }
+                })
+                .catch(error => console.error('Erro ao atualizar:', error));
         }, 60000);
     </script>
 </body>
