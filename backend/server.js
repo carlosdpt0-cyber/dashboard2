@@ -16,15 +16,15 @@ const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
-app.get('/', (req, res) => {
-res.send('OK from Hostinger');
-});
-
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+res.send('OK from Hostinger');
+});
 
 // ==============================
 // CONFIGURAÇÃO DO MySQL (phpMyAdmin)
