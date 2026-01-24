@@ -16,6 +16,10 @@ const multer = require('multer');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+app.get('/', (req, res) => {
+res.send('OK from Hostinger');
+});
+
 dotenv.config();
 
 const app = express();
