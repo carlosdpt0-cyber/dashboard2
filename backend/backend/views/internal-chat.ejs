@@ -1,0 +1,583 @@
+// ==============================
+// ESQUEMAS DO MONGODB PARA CHAT INTERNO
+// ==============================
+
+const InternalMessageSchema = new mongoose.Schema({
+    senderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff',
+        required: true
+    },
+    recipientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff',
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    read: {
+        type: Boolean,
+        default: false
+    },
+    attachments: [{
+        fileName: String,
+        fileUrl: String,
+        fileSize: Number,
+        fileType: String
+    }],
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+}, { collection: 'internal_messages' });
+
+const InternalMessage = mongoose.model('InternalMessage', InternalMessageSchema);
+
+// ==============================
+// ROTAS DO CHAT INTERNO
+// ==============================
+
+// Página principal do chat interno
+app.get('/email/internal', requireAuth, async (req, res) => {
+    try {
+        // Buscar todos os membros da equipa (excluindo o usuário atual)
+        const staffMembers = await Staff.find({
+            _id: { $ne: req.session.staff.id },
+            isActive: true
+        })
+        .select('name email role department photo lastLogin')
+        .sort({ name: 1 })
+        .lean();
+
+        // Calcular mensagens não lidas para cada staff
+        const unreadMessages = {};
+        for (const staff of staffMembers) {
+            const unreadCount = await InternalMessage.countDocuments({
+                senderId: staff._id,
+                recipientId: req.session.staff.id,
+                read: false
+            });
+            unreadMessages[staff._id] = unreadCount;
+        }
+
+        // Verificar se há um staff selecionado na query string
+        let selectedStaff = null;
+        let messages = [];
+        
+        if (req.query.chat) {
+            selectedStaff = await Staff.findById(req.query.chat)
+                .select('name email role department photo lastLogin')
+                .lean();
+
+            if (selectedStaff) {
+                // Buscar mensagens entre os dois usuários
+                messages = await InternalMessage.find({
+                    $or: [
+                        { senderId: req.session.staff.id, recipientId: selectedStaff._id },
+                        { senderId: selectedStaff._id, recipientId: req.session.staff.id }
+                    ]
+                })
+                .populate('senderId', 'name photo')
+                .populate('recipientId', 'name photo')
+                .sort({ timestamp: 1 })
+                .lean();
+
+                // Marcar mensagens como lidas
+                await InternalMessage.updateMany(
+                    {
+                        senderId: selectedStaff._id,
+                        recipientId: req.session.staff.id,
+                        read: false
+                    },
+                    { read: true }
+                );
+            }
+        }
+
+        const notifications = await UserNotification.find({ 
+            userId: req.session.staff.id 
+        })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+
+        res.render('internal-chat', {
+            title: 'Chat Interno - B7Uno Casino',
+            breadcrumb: 'Chat Interno',
+            staffMembers,
+            selectedStaff,
+            messages,
+            unreadMessages,
+            user: req.session.staff,
+            unreadInternalCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
+            notifications: {
+                unreadCount: await UserNotification.countDocuments({ 
+                    userId: req.session.staff.id,
+                    read: false 
+                }),
+                notifications: notifications
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao carregar chat interno:', error);
+        req.flash('error', 'Erro ao carregar chat interno');
+        res.redirect('/email');
+    }
+});
+
+// API: Buscar mensagens com um staff específico
+app.get('/api/chat/messages/:staffId', requireAuth, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(staffId)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'ID de staff inválido' 
+            });
+        }
+
+        const messages = await InternalMessage.find({
+            $or: [
+                { senderId: req.session.staff.id, recipientId: staffId },
+                { senderId: staffId, recipientId: req.session.staff.id }
+            ]
+        })
+        .populate('senderId', 'name photo')
+        .populate('recipientId', 'name photo')
+        .sort({ timestamp: 1 })
+        .lean();
+
+        // Marcar mensagens como lidas
+        await InternalMessage.updateMany(
+            {
+                senderId: staffId,
+                recipientId: req.session.staff.id,
+                read: false
+            },
+            { read: true }
+        );
+
+        res.json({
+            success: true,
+            messages: messages.map(msg => ({
+                id: msg._id,
+                senderId: msg.senderId._id,
+                senderName: msg.senderId.name,
+                recipientId: msg.recipientId._id,
+                recipientName: msg.recipientId.name,
+                message: msg.message,
+                read: msg.read,
+                timestamp: msg.timestamp,
+                attachments: msg.attachments
+            }))
+        });
+    } catch (error) {
+        console.error('Erro ao buscar mensagens:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar mensagens' 
+        });
+    }
+});
+
+// API: Enviar mensagem
+app.post('/api/chat/send', requireAuth, async (req, res) => {
+    try {
+        const { recipientId, message } = req.body;
+        
+        if (!recipientId || !message) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Destinatário e mensagem são obrigatórios' 
+            });
+        }
+        
+        if (!mongoose.Types.ObjectId.isValid(recipientId)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'ID de destinatário inválido' 
+            });
+        }
+        
+        // Verificar se o destinatário existe e está ativo
+        const recipient = await Staff.findOne({
+            _id: recipientId,
+            isActive: true
+        });
+        
+        if (!recipient) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Destinatário não encontrado ou inativo' 
+            });
+        }
+        
+        // Criar mensagem
+        const newMessage = new InternalMessage({
+            senderId: req.session.staff.id,
+            recipientId: recipientId,
+            message: message,
+            read: false
+        });
+        
+        await newMessage.save();
+        
+        // Log da ação
+        await createSystemLog(
+            req.session.staff.id,
+            req.session.staff,
+            'create',
+            'email',
+            `Mensagem interna enviada para ${recipient.name}`,
+            `Mensagem: ${message.substring(0, 50)}...`,
+            req
+        );
+        
+        // Notificar via WebSocket
+        broadcastNotification({
+            type: 'new_message',
+            recipientId: recipientId,
+            sender: {
+                id: req.session.staff.id,
+                name: req.session.staff.name
+            },
+            message: message,
+            timestamp: new Date()
+        });
+        
+        res.json({
+            success: true,
+            message: 'Mensagem enviada com sucesso!',
+            messageId: newMessage._id
+        });
+    } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao enviar mensagem' 
+        });
+    }
+});
+
+// API: Marcar mensagens como lidas
+app.post('/api/chat/mark-read/:staffId', requireAuth, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(staffId)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'ID de staff inválido' 
+            });
+        }
+        
+        await InternalMessage.updateMany(
+            {
+                senderId: staffId,
+                recipientId: req.session.staff.id,
+                read: false
+            },
+            { read: true }
+        );
+        
+        res.json({ success: true, message: 'Mensagens marcadas como lidas' });
+    } catch (error) {
+        console.error('Erro ao marcar mensagens como lidas:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao marcar mensagens como lidas' 
+        });
+    }
+});
+
+// API: Upload de anexos
+app.post('/api/chat/upload', requireAuth, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Nenhum ficheiro enviado' 
+            });
+        }
+        
+        const { recipientId } = req.body;
+        
+        if (!recipientId) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Destinatário é obrigatório' 
+            });
+        }
+        
+        const fileUrl = `/uploads/${req.file.filename}`;
+        
+        res.json({
+            success: true,
+            fileName: req.file.originalname,
+            fileUrl: fileUrl,
+            fileSize: req.file.size
+        });
+    } catch (error) {
+        console.error('Erro ao fazer upload:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao fazer upload do ficheiro' 
+        });
+    }
+});
+
+// API: Buscar estatísticas do chat
+app.get('/api/chat/stats', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.staff.id;
+        
+        const totalMessages = await InternalMessage.countDocuments({
+            $or: [
+                { senderId: userId },
+                { recipientId: userId }
+            ]
+        });
+        
+        const unreadMessages = await InternalMessage.countDocuments({
+            recipientId: userId,
+            read: false
+        });
+        
+        const recentContacts = await InternalMessage.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { senderId: mongoose.Types.ObjectId(userId) },
+                        { recipientId: mongoose.Types.ObjectId(userId) }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    otherUser: {
+                        $cond: {
+                            if: { $eq: ['$senderId', mongoose.Types.ObjectId(userId)] },
+                            then: '$recipientId',
+                            else: '$senderId'
+                        }
+                    },
+                    timestamp: 1
+                }
+            },
+            {
+                $group: {
+                    _id: '$otherUser',
+                    lastMessage: { $max: '$timestamp' }
+                }
+            },
+            { $sort: { lastMessage: -1 } },
+            { $limit: 5 }
+        ]);
+        
+        res.json({
+            success: true,
+            stats: {
+                totalMessages,
+                unreadMessages,
+                recentContacts: recentContacts.length
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao buscar estatísticas do chat:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar estatísticas' 
+        });
+    }
+});
+
+// API: Buscar destinatários para email
+app.get('/api/email/recipients/:type', requireAuth, async (req, res) => {
+    try {
+        const { type } = req.params;
+        let query = { isActive: true, email: { $exists: true, $ne: '' } };
+        
+        switch (type) {
+            case 'all':
+                // Todos os jogadores com email
+                break;
+            case 'newsletter':
+                query.newsletter = true;
+                break;
+            case 'vip':
+                query.level = { $in: ['Gold', 'Platinum', 'Diamond'] };
+                break;
+            case 'active':
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                query.lastLogin = { $gte: thirtyDaysAgo };
+                break;
+            default:
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Tipo de destinatário inválido' 
+                });
+        }
+        
+        const players = await User.find(query)
+            .select('username email firstName lastName level lastLogin')
+            .sort({ username: 1 })
+            .limit(100)
+            .lean();
+        
+        res.json({
+            success: true,
+            players: players,
+            count: players.length
+        });
+    } catch (error) {
+        console.error('Erro ao buscar destinatários:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar destinatários' 
+        });
+    }
+});
+
+// API: Estatísticas de email
+app.get('/api/email/stats', requireAuth, async (req, res) => {
+    try {
+        const totalPlayers = await User.countDocuments({ isActive: true });
+        const playersWithEmail = await User.countDocuments({ 
+            isActive: true, 
+            email: { $exists: true, $ne: '' } 
+        });
+        
+        const newsletterSubscribers = await User.countDocuments({ 
+            isActive: true, 
+            newsletter: true,
+            email: { $exists: true, $ne: '' } 
+        });
+        
+        res.json({
+            success: true,
+            totalPlayers,
+            playersWithEmail,
+            newsletterSubscribers
+        });
+    } catch (error) {
+        console.error('Erro ao buscar estatísticas de email:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar estatísticas' 
+        });
+    }
+});
+
+// API: Logs de email
+app.get('/api/email/logs', requireAuth, async (req, res) => {
+    try {
+        const logs = await EmailLog.find()
+            .sort({ sentAt: -1 })
+            .limit(20)
+            .lean();
+        
+        res.json({
+            success: true,
+            logs: logs
+        });
+    } catch (error) {
+        console.error('Erro ao buscar logs de email:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar logs' 
+        });
+    }
+});
+
+// Atualizar função broadcastNotification para suportar chat
+function broadcastNotification(notification) {
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            // Se for uma mensagem específica para um usuário
+            if (notification.recipientId) {
+                if (client.userId === notification.recipientId) {
+                    client.send(JSON.stringify({
+                        type: 'notification',
+                        data: notification
+                    }));
+                }
+            } else {
+                // Notificação geral
+                client.send(JSON.stringify({
+                    type: 'notification',
+                    data: notification
+                }));
+            }
+        }
+    });
+}
+
+// Atualizar WebSocket para suportar chat
+wss.on('connection', (ws, req) => {
+    console.log('✅ Novo cliente WebSocket conectado');
+    
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message);
+            
+            if (data.type === 'subscribe_notifications') {
+                ws.subscribed = true;
+                ws.userId = data.userId;
+                
+                ws.send(JSON.stringify({
+                    type: 'subscription_confirmed',
+                    message: 'Inscrito em notificações'
+                }));
+            } else if (data.type === 'chat_connect') {
+                ws.userId = data.userId;
+                
+                // Atualizar status do usuário como online
+                broadcastNotification({
+                    type: 'user_status',
+                    userId: data.userId,
+                    status: 'online'
+                });
+            } else if (data.type === 'chat_message') {
+                // Enviar mensagem para o destinatário
+                broadcastNotification({
+                    type: 'chat_message',
+                    sender: data.sender,
+                    recipientId: data.recipientId,
+                    message: data.message,
+                    timestamp: new Date().toISOString()
+                });
+            } else if (data.type === 'typing') {
+                // Enviar indicador de "a escrever"
+                broadcastNotification({
+                    type: 'typing',
+                    senderId: data.senderId,
+                    senderName: data.senderName,
+                    recipientId: data.recipientId
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao processar mensagem WebSocket:', error);
+        }
+    });
+    
+    ws.on('close', () => {
+        console.log('❌ Cliente WebSocket desconectado');
+        
+        // Atualizar status do usuário como offline
+        if (ws.userId) {
+            broadcastNotification({
+                type: 'user_status',
+                userId: ws.userId,
+                status: 'offline'
+            });
+        }
+    });
+    
+    ws.on('error', (error) => {
+        console.error('💥 Erro no WebSocket:', error);
+    });
+});

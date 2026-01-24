@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Casino X | Dashboard' %></title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <% if (cssFiles && Array.isArray(cssFiles)) { %>
+        <% cssFiles.forEach(file => { %>
+            <link rel="stylesheet" href="<%= file %>">
+        <% }) %>
+    <% } %>
+    
+    <!-- Estilos inline -->
+    <% if (inlineStyles) { %>
+        <style>
+            <%= inlineStyles %>
+        </style>
+    <% } %>
+</head>
+<body class="<%= bodyClass || '' %>">
+    <!-- O conteúdo será passado como body -->
+    <% if (body) { %>
+        <%- body %>
+    <% } else { %>
+        <!-- Fallback se body não existir -->
+        <div style="padding: 20px; text-align: center;">
+            <h1>Erro de Renderização</h1>
+            <p>A página não pode ser carregada corretamente.</p>
+        </div>
+    <% } %>
+    
+    <!-- Scripts -->
+    <% if (jsFiles && Array.isArray(jsFiles)) { %>
+        <% jsFiles.forEach(file => { %>
+            <script src="<%= file %>"></script>
+        <% }) %>
+    <% } %>
+    
+    <!-- Scripts inline -->
+    <% if (inlineScripts) { %>
+        <script>
+            <%= inlineScripts %>
+        </script>
+    <% } %>
+</body>
+</html>

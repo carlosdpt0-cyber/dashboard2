@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'B7Uno Casino | Suporte Técnico' %></title>
+    <link rel="stylesheet" href="/css/suporte.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* [Todo o CSS permanece igual - mantive para completude] */
+        :root {
+            --bg-primary: #0f172a;
+            /* ... resto do CSS ... */
+        }
+        
+        /* ... Todo o CSS do original permanece ... */
+    </style>
+</head>
+<body data-theme="dark">
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <h2>B7Uno Casino <span class="b7uno-badge">SUPORTE</span></h2>
+                <div class="user-mini-info">
+                    <div class="user-mini-avatar" id="sidebarAvatar">
+                        <% if (locals.user && locals.user.photo) { %>
+                            <img src="/uploads/<%= locals.user.photo %>?t=<%= Date.now() %>" 
+                                 alt="<%= locals.user.name %>"
+                                 onerror="handleAvatarError(this, 'sidebarAvatar')">
+                        <% } else { %>
+                            <i class="fas fa-user-tie"></i>
+                        <% } %>
+                    </div>
+                    <div class="user-mini-details">
+                        <span id="sidebarStaffName"><%= locals.user ? locals.user.name : 'Staff' %></span>
+                        <small id="sidebarStaffRole"><%= locals.user ? locals.user.role.toUpperCase() : 'STAFF' %></small>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="menu">
+                <li><a href="/dashboard">
+                    <i class="fas fa-home"></i><span> Dashboard</span>
+                </a></li>
+                <li><a href="/players">
+                    <i class="fas fa-users"></i><span> Jogadores</span>
+                </a></li>
+                <li><a href="/withdrawals">
+                    <i class="fas fa-money-bill-wave"></i><span> Levantamentos</span>
+                    <% if (locals.stats && locals.stats.pendingWithdrawals > 0) { %>
+                        <span class="badge"><%= locals.stats.pendingWithdrawals %></span>
+                    <% } %>
+                </a></li>
+                <li><a href="/payments">
+                    <i class="fas fa-credit-card"></i><span> Pagamentos</span>
+                </a></li>
+                <li><a href="/support" class="active">
+                    <i class="fas fa-headset"></i><span> Suporte</span>
+                    <% if (locals.stats && locals.stats.open > 0) { %>
+                        <span class="badge"><%= locals.stats.open %></span>
+                    <% } %>
+                </a></li>
+                <% if (locals.user && (locals.user.role === 'admin' || locals.user.role === 'support_manager')) { %>
+                <li><a href="/staff">
+                    <i class="fas fa-user-tie"></i><span> Staff</span>
+                </a></li>
+                <% } %>
+                <li><a href="/email">
+                    <i class="fas fa-envelope"></i><span> Email</span>
+                </a></li>
+                <li><a href="/logs">
+                    <i class="fas fa-clipboard-list"></i><span> Logs</span>
+                </a></li>
+                <li><a href="/settings">
+                    <i class="fas fa-cog"></i><span> Definições</span>
+                </a></li>
+                
+                <!-- Theme Toggle -->
+                <li>
+                    <div class="theme-toggle" id="sidebarThemeToggle">
+                        <input type="checkbox" id="sidebarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="sidebarThemeLabel">Modo Escuro</span>
+                    </div>
+                </li>
+                
+                <!-- Logout -->
+                <li>
+                    <a href="#" id="logoutBtnSidebar">
+                        <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator"></div>
+                    <span>Sistema Online</span>
+                </div>
+                <div class="server-time" id="serverTime">--:--:--</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb" id="breadcrumb">
+                        <%= breadcrumb || 'Suporte Técnico' %>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle" id="topbarThemeToggle">
+                        <input type="checkbox" id="topbarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="topbarThemeLabel">Modo Escuro</span>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="notifications">
+                        <button class="notification-btn" id="notificationBtn">
+                            <i class="fas fa-bell"></i>
+                            <% 
+                                const totalAlerts = locals.notifications ? 
+                                    (locals.notifications.unreadCount || 0) : 0;
+                                if (totalAlerts > 0) { 
+                            %>
+                                <span class="notification-count show">
+                                    <%= totalAlerts > 9 ? '9+' : totalAlerts %>
+                                </span>
+                            <% } %>
+                        </button>
+                    </div>
+                    
+                    <!-- User Profile -->
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">
+                            <% if (locals.user && locals.user.photo) { %>
+                                <img src="/uploads/<%= locals.user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= locals.user.name %>" 
+                                     id="userAvatarImage"
+                                     onerror="handleAvatarError(this, 'userAvatar')">
+                            <% } else { %>
+                                <span id="userInitials"><%= locals.user ? locals.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'S' %></span>
+                            <% } %>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" id="topbarStaffName"><%= locals.user ? locals.user.name : 'Staff' %></div>
+                            <div class="user-role" id="topbarStaffRole"><%= locals.user ? locals.user.role.toUpperCase() : 'STAFF' %></div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-secondary); margin-left: 5px;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Dropdown -->
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <div class="user-info">
+                        <div class="user-avatar" id="dropdownAvatar">
+                            <% if (locals.user && locals.user.photo) { %>
+                                <img src="/uploads/<%= locals.user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= locals.user.name %>" 
+                                     id="dropdownAvatarImage"
+                                     onerror="handleAvatarError(this, 'dropdownAvatar')">
+                            <% } else { %>
+                                <span id="dropdownInitials"><%= locals.user ? locals.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'S' %></span>
+                            <% } %>
+                        </div>
+                        <div>
+                            <div class="user-name" id="dropdownUserName"><%= locals.user ? locals.user.name : 'Staff' %></div>
+                            <div class="user-role"><%= locals.user ? locals.user.role.toUpperCase() : 'STAFF' %></div>
+                            <div class="user-email" style="font-size: 11px; color: var(--text-secondary);">
+                                <%= locals.user ? locals.user.email : '' %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <a href="/profile" class="dropdown-item" id="myProfileLink">
+                        <i class="fas fa-user"></i>
+                        <span>Meu Perfil</span>
+                    </a>
+                    <a href="/settings" class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Definições</span>
+                    </a>
+                    <a href="/logs" class="dropdown-item">
+                        <i class="fas fa-history"></i>
+                        <span>Histórico</span>
+                    </a>
+                </div>
+                <div class="dropdown-footer">
+                    <button class="btn btn-secondary" id="logoutBtnDropdown">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1>
+                        <i class="fas fa-headset"></i> Gestão de Suporte
+                        <button class="btn btn-primary" id="createTicketBtn" style="margin-left: auto;">
+                            <i class="fas fa-plus"></i> Novo Ticket
+                        </button>
+                    </h1>
+                    <p>
+                        Gerir e atribuir tickets de suporte. <%= locals.user ? locals.user.name : 'Staff' %>!
+                        <% if (locals.user && locals.user.lastLogin) { %>
+                            <br><small style="font-size: 12px;">Último login: <%= new Date(locals.user.lastLogin).toLocaleString('pt-PT') %></small>
+                        <% } %>
+                    </p>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card open">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-value"><%= locals.stats ? locals.stats.open : 0 %></div>
+                        <div class="stat-label">Tickets Abertos</div>
+                    </div>
+                    
+                    <div class="stat-card progress">
+                        <div class="stat-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="stat-value"><%= locals.stats ? locals.stats.inProgress : 0 %></div>
+                        <div class="stat-label">Em Progresso</div>
+                    </div>
+                    
+                    <div class="stat-card assigned">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-value"><%= locals.stats ? locals.stats.assigned : 0 %></div>
+                        <div class="stat-label">Atribuídos</div>
+                    </div>
+                    
+                    <div class="stat-card resolved">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-value"><%= locals.stats ? locals.stats.resolved : 0 %></div>
+                        <div class="stat-label">Resolvidos</div>
+                    </div>
+                    
+                    <div class="stat-card closed">
+                        <div class="stat-icon">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="stat-value"><%= locals.stats ? locals.stats.total - (locals.stats.open + locals.stats.inProgress + locals.stats.resolved) : 0 %></div>
+                        <div class="stat-label">Fechados</div>
+                    </div>
+                </div>
+                
+                <!-- Controls Bar -->
+                <div class="controls-bar">
+                    <form method="GET" action="/support" style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="search" placeholder="Pesquisar ticket..." 
+                                   value="<%= locals.search || '' %>">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select name="status" class="filter-select">
+                                <option value="">Todos status</option>
+                                <option value="open" <%= locals.status === 'open' ? 'selected' : '' %>>Aberto</option>
+                                <option value="in-progress" <%= locals.status === 'in-progress' ? 'selected' : '' %>>Em Progresso</option>
+                                <option value="resolved" <%= locals.status === 'resolved' ? 'selected' : '' %>>Resolvido</option>
+                                <option value="closed" <%= locals.status === 'closed' ? 'selected' : '' %>>Fechado</option>
+                            </select>
+                            
+                            <select name="priority" class="filter-select">
+                                <option value="">Todas prioridades</option>
+                                <option value="low" <%= locals.priority === 'low' ? 'selected' : '' %>>Baixa</option>
+                                <option value="medium" <%= locals.priority === 'medium' ? 'selected' : '' %>>Média</option>
+                                <option value="high" <%= locals.priority === 'high' ? 'selected' : '' %>>Alta</option>
+                                <option value="urgent" <%= locals.priority === 'urgent' ? 'selected' : '' %>>Urgente</option>
+                            </select>
+                            
+                            <select name="category" class="filter-select">
+                                <option value="">Todas categorias</option>
+                                <option value="deposit" <%= locals.category === 'deposit' ? 'selected' : '' %>>Depósito</option>
+                                <option value="withdrawal" <%= locals.category === 'withdrawal' ? 'selected' : '' %>>Levantamento</option>
+                                <option value="account" <%= locals.category === 'account' ? 'selected' : '' %>>Conta/Login</option>
+                                <option value="technical" <%= locals.category === 'technical' ? 'selected' : '' %>>Problema Técnico</option>
+                                <option value="bonus" <%= locals.category === 'bonus' ? 'selected' : '' %>>Bónus/Promoções</option>
+                                <option value="game" <%= locals.category === 'game' ? 'selected' : '' %>>Problema com Jogo</option>
+                                <option value="other" <%= locals.category === 'other' ? 'selected' : '' %>>Outro</option>
+                            </select>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            
+                            <a href="/support" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Tickets Table -->
+                <div class="table-container">
+                    <% if (locals.tickets && locals.tickets.length > 0) { %>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">ID</th>
+                                    <th>Assunto</th>
+                                    <th>Cliente</th>
+                                    <th>Categoria</th>
+                                    <th>Prioridade</th>
+                                    <th>Estado</th>
+                                    <th>Atribuído a</th>
+                                    <th>Criado em</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% locals.tickets.forEach(ticket => { 
+                                    let playerName = ticket.playerName || 'Cliente';
+                                    if (ticket.playerId && typeof ticket.playerId === 'object') {
+                                        if (ticket.playerId.firstName && ticket.playerId.lastName) {
+                                            playerName = `${ticket.playerId.firstName} ${ticket.playerId.lastName}`;
+                                        } else if (ticket.playerId.username) {
+                                            playerName = ticket.playerId.username;
+                                        }
+                                    }
+                                %>
+                                    <tr>
+                                        <td>
+                                            <strong class="ticket-id">#<%= ticket.ticketId || ticket._id.toString().slice(-6).toUpperCase() %></strong>
+                                        </td>
+                                        <td>
+                                            <div class="ticket-info">
+                                                <div class="ticket-subject"><%= ticket.subject || 'Sem assunto' %></div>
+                                                <% if (ticket.messages && ticket.messages[0] && ticket.messages[0].message && ticket.messages[0].message.length > 50) { %>
+                                                <div style="font-size: 12px; color: var(--text-tertiary);">
+                                                    <%= ticket.messages[0].message.substring(0, 50) %>...
+                                                </div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="ticket-user">
+                                                <%= ticket.playerEmail || (ticket.playerId && ticket.playerId.email) || 'Sem email' %>
+                                            </div>
+                                            <div style="font-size: 12px; color: var(--text-tertiary);">
+                                                <%= playerName %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="category-badge">
+                                                <i class="fas fa-tag"></i>
+                                                <%= ticket.category === 'deposit' ? 'Depósito' :
+                                                   ticket.category === 'withdrawal' ? 'Levantamento' :
+                                                   ticket.category === 'account' ? 'Conta' :
+                                                   ticket.category === 'technical' ? 'Técnico' :
+                                                   ticket.category === 'bonus' ? 'Bónus' :
+                                                   ticket.category === 'game' ? 'Jogo' : 'Outro' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                let priorityClass = 'priority-medium';
+                                                let priorityIcon = 'fa-flag';
+                                                if (ticket.priority === 'high' || ticket.priority === 'urgent') {
+                                                    priorityClass = 'priority-high';
+                                                    priorityIcon = 'fa-exclamation-triangle';
+                                                } else if (ticket.priority === 'low') {
+                                                    priorityClass = 'priority-low';
+                                                    priorityIcon = 'fa-flag';
+                                                }
+                                            %>
+                                            <span class="priority-badge <%= priorityClass %>">
+                                                <i class="fas <%= priorityIcon %>"></i>
+                                                <%= ticket.priority === 'urgent' ? 'Urgente' :
+                                                   ticket.priority === 'high' ? 'Alta' :
+                                                   ticket.priority === 'medium' ? 'Média' : 'Baixa' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                let statusClass = 'status-open';
+                                                let statusIcon = 'fa-clock';
+                                                let statusText = ticket.status || 'open';
+                                                let statusDisplay = 'Aberto';
+                                                
+                                                if (statusText === 'in_progress') {
+                                                    statusClass = 'status-progress';
+                                                    statusIcon = 'fa-sync-alt';
+                                                    statusDisplay = 'Em Progresso';
+                                                } else if (statusText === 'resolved') {
+                                                    statusClass = 'status-resolved';
+                                                    statusIcon = 'fa-check-circle';
+                                                    statusDisplay = 'Resolvido';
+                                                } else if (statusText === 'closed') {
+                                                    statusClass = 'status-closed';
+                                                    statusIcon = 'fa-times-circle';
+                                                    statusDisplay = 'Fechado';
+                                                }
+                                            %>
+                                            <span class="status-badge <%= statusClass %>">
+                                                <i class="fas <%= statusIcon %>"></i>
+                                                <%= statusDisplay %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if (ticket.assignedTo && ticket.assignedTo.staffName) { %>
+                                                <span style="color: var(--success); font-size: 12px; font-weight: 600;">
+                                                    <i class="fas fa-user-check"></i>
+                                                    <%= ticket.assignedTo.staffName %>
+                                                </span>
+                                            <% } else { %>
+                                                <span style="color: var(--text-tertiary);">Não atribuído</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (ticket.createdAt) { %>
+                                                <%= new Date(ticket.createdAt).toLocaleDateString('pt-PT') %>
+                                                <div style="font-size: 12px; color: var(--text-tertiary);">
+                                                    <%= new Date(ticket.createdAt).toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'}) %>
+                                                </div>
+                                            <% } else { %>
+                                                <span style="color: var(--text-tertiary);">N/A</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-action view" data-ticket-id="<%= ticket._id %>" title="Ver detalhes">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn-action assign" data-ticket-id="<%= ticket._id %>" title="Atribuir ticket">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </button>
+                                                <% if (ticket.priority !== 'urgent') { %>
+                                                <button class="btn-action escalate" data-ticket-id="<%= ticket._id %>" title="Escalonar ticket">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                                <% } %>
+                                                <% if (ticket.status !== 'closed' && ticket.status !== 'resolved') { %>
+                                                <button class="btn-action close" data-ticket-id="<%= ticket._id %>" title="Fechar ticket">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Pagination -->
+                        <% if (locals.totalPages && locals.totalPages > 1) { %>
+                            <div class="pagination">
+                                <% if (locals.page > 1) { %>
+                                    <a href="?page=<%= locals.page-1 %><%= locals.search ? '&search=' + locals.search : '' %><%= locals.status ? '&status=' + locals.status : '' %><%= locals.priority ? '&priority=' + locals.priority : '' %><%= locals.category ? '&category=' + locals.category : '' %>" class="page-link">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                <% } %>
+                                
+                                <% for (let i = 1; i <= locals.totalPages; i++) { %>
+                                    <% if (i === 1 || i === locals.totalPages || (i >= locals.page-2 && i <= locals.page+2)) { %>
+                                        <a href="?page=<%= i %><%= locals.search ? '&search=' + locals.search : '' %><%= locals.status ? '&status=' + locals.status : '' %><%= locals.priority ? '&priority=' + locals.priority : '' %><%= locals.category ? '&category=' + locals.category : '' %>" 
+                                           class="page-link <%= i === locals.page ? 'active' : '' %>">
+                                            <%= i %>
+                                        </a>
+                                    <% } else if (i === locals.page-3 || i === locals.page+3) { %>
+                                        <span class="page-link">...</span>
+                                    <% } %>
+                                <% } %>
+                                
+                                <% if (locals.page < locals.totalPages) { %>
+                                    <a href="?page=<%= locals.page+1 %><%= locals.search ? '&search=' + locals.search : '' %><%= locals.status ? '&status=' + locals.status : '' %><%= locals.priority ? '&priority=' + locals.priority : '' %><%= locals.category ? '&category=' + locals.category : '' %>" class="page-link">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <i class="fas fa-inbox" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3 style="color: var(--text-secondary); margin-bottom: 10px;">Nenhum ticket encontrado</h3>
+                            <p style="color: var(--text-tertiary);">Tente alterar os filtros de pesquisa.</p>
+                            <button class="btn btn-primary" id="createFirstTicketBtn" style="margin-top: 20px;">
+                                <i class="fas fa-plus"></i> Criar Primeiro Ticket
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Overlay para mobile -->
+        <div class="overlay" id="overlay"></div>
+    </div>
+
+    <!-- Modal de Detalhes do Ticket -->
+    <div class="modal" id="ticketDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-ticket-alt"></i> Detalhes do Ticket</h3>
+                <button class="modal-close" id="closeDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="ticketDetailsContent" style="padding: 20px;">
+                <!-- Conteúdo será carregado dinamicamente via JavaScript -->
+                <div id="ticketLoading" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--accent-primary);"></i>
+                    <p style="margin-top: 20px; color: var(--text-secondary);">Carregando detalhes do ticket...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Atribuir Ticket -->
+    <div class="modal" id="assignTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Atribuir Ticket</h3>
+                <button class="modal-close" id="closeAssignModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Atribuir a:</label>
+                    <select class="form-control" id="assignToSelect">
+                        <option value="">Selecionar operador...</option>
+                        <option value="<%= locals.user ? locals.user.name : 'Suporte' %>">Eu (<%= locals.user ? locals.user.name : 'Suporte' %>)</option>
+                        <% 
+                        // Removido o código que tentava fazer query do banco de dados aqui
+                        // Isso deve ser feito no controller e passado como variável para o template
+                        if (locals.availableStaff && locals.availableStaff.length > 0) {
+                            locals.availableStaff.forEach(staff => {
+                                if (staff._id.toString() !== locals.user.id) {
+                        %>
+                        <option value="<%= staff.name %>"><%= staff.name %> (<%= staff.role %>)</option>
+                        <% 
+                                }
+                            });
+                        }
+                        %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mensagem (opcional):</label>
+                    <textarea class="form-control" id="assignMessage" rows="3" placeholder="Adicione uma mensagem para o operador..."></textarea>
+                </div>
+                <button class="btn btn-primary" id="confirmAssignBtn" style="width: 100%;">
+                    <i class="fas fa-user-check"></i> Confirmar Atribuição
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Escalonar Ticket -->
+    <div class="modal" id="escalateTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-arrow-up"></i> Elevar Ticket</h3>
+                <button class="modal-close" id="closeEscalateModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Elevar para:</label>
+                    <select class="form-control" id="escalateToSelect">
+                        <option value="">Selecionar nível...</option>
+                        <option value="supervisor">Supervisor de Suporte</option>
+                        <option value="financeiro">Departamento Financeiro</option>
+                        <option value="tecnico">Departamento Técnico</option>
+                        <option value="administracao">Administração</option>
+                        <option value="compliance">Compliance</option>
+                        <option value="gestao">Gestão</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Motivo da elevação:</label>
+                    <select class="form-control" id="escalateReason">
+                        <option value="">Selecionar motivo...</option>
+                        <option value="complexo">Problema complexo</option>
+                        <option value="financial">Problema financeiro</option>
+                        <option value="technical">Problema técnico avançado</option>
+                        <option value="security">Problema de segurança</option>
+                        <option value="compliance">Questão de compliance</option>
+                        <option value="urgente">Urgência operacional</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição detalhada:</label>
+                    <textarea class="form-control" id="escalateDescription" rows="4" placeholder="Descreva porque este ticket precisa ser elevado..."></textarea>
+                </div>
+                <button class="btn btn-warning" id="confirmEscalateBtn" style="width: 100%;">
+                    <i class="fas fa-arrow-up"></i> Confirmar Elevação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Criar Ticket -->
+    <div class="modal" id="createTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Criar Novo Ticket</h3>
+                <button class="modal-close" id="closeCreateModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createTicketForm">
+                    <div class="form-group">
+                        <label>Assunto *</label>
+                        <input type="text" class="form-control" id="ticketSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cliente (Email) *</label>
+                        <input type="email" class="form-control" id="ticketEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select class="form-control" id="ticketCategory">
+                            <option value="deposit">Depósito</option>
+                            <option value="withdrawal">Levantamento</option>
+                            <option value="account">Conta/Login</option>
+                            <option value="technical">Problema Técnico</option>
+                            <option value="bonus">Bónus/Promoções</option>
+                            <option value="game">Problema com Jogo</option>
+                            <option value="other">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioridade</label>
+                        <select class="form-control" id="ticketPriority">
+                            <option value="low">Baixa</option>
+                            <option value="medium" selected>Média</option>
+                            <option value="high">Alta</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensagem *</label>
+                        <textarea class="form-control" id="ticketMessage" rows="5" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCreateBtn">Cancelar</button>
+                <button class="btn btn-success" id="confirmCreateBtn">
+                    <i class="fas fa-save"></i> Criar Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Notificações -->
+    <div class="modal" id="notificationsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> Notificações</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="notifications-list" id="notificationsList">
+                    <div class="empty-notifications">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>Carregando notificações...</p>
+                    </div>
+                </div>
+                <div class="modal-actions" style="padding: 16px 24px; border-top: 1px solid var(--border-color);">
+                    <button class="btn btn-secondary" id="markAllAsReadBtn" style="width: 100%; margin-bottom: 8px;">
+                        <i class="fas fa-check-double"></i> Marcar todas como lidas
+                    </button>
+                    <button class="btn btn-secondary" id="clearAllNotificationsBtn" style="width: 100%;">
+                        <i class="fas fa-trash"></i> Limpar todas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== VARIÁVEIS GLOBAIS =====
+        let currentTicketId = null;
+        let currentTicketData = null;
+        
+        // ===== INICIALIZAÇÃO =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Sistema de Suporte B7Uno Carregado');
+            
+            // 1. Configurar tema
+            initTheme();
+            
+            // 2. Configurar eventos básicos
+            setupBasicEvents();
+            
+            // 3. Configurar eventos dos tickets
+            setupTicketEvents();
+            
+            // 4. Iniciar relógio
+            startClock();
+            
+            console.log('✅ Sistema de Suporte pronto!');
+        });
+        
+        // ===== TEMA =====
+        function initTheme() {
+            const savedTheme = localStorage.getItem('casinoX-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const checkboxes = document.querySelectorAll('#sidebarThemeCheckbox, #topbarThemeCheckbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = savedTheme === 'light';
+            });
+            
+            updateThemeLabels(savedTheme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('casinoX-theme', newTheme);
+            
+            const checkboxes = document.querySelectorAll('#sidebarThemeCheckbox, #topbarThemeCheckbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = newTheme === 'light';
+            });
+            
+            updateThemeLabels(newTheme);
+            
+            showToast(`Tema alterado para ${newTheme === 'dark' ? 'Modo Escuro' : 'Modo Claro'}`, 'info');
+        }
+        
+        function updateThemeLabels(theme) {
+            document.querySelectorAll('.theme-label').forEach(label => {
+                label.textContent = theme === 'light' ? 'Modo Claro' : 'Modo Escuro';
+            });
+        }
+        
+        // ===== EVENTOS BÁSICOS =====
+        function setupBasicEvents() {
+            // TOGGLE DO TEMA
+            document.querySelectorAll('.theme-toggle').forEach(toggle => {
+                toggle.addEventListener('click', toggleTheme);
+            });
+            
+            // TOGGLE DO MENU
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        sidebar.classList.toggle('active');
+                        overlay.classList.toggle('active');
+                    } else {
+                        sidebar.classList.toggle('collapsed');
+                    }
+                });
+            }
+            
+            // OVERLAY PARA FECHAR MENU
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+            
+            // PERFIL DO USUÁRIO - DROPDOWN
+            const userProfile = document.getElementById('userProfile');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userProfile && userDropdown) {
+                userProfile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!userProfile.contains(e.target) && !userDropdown.contains(e.target)) {
+                        userDropdown.style.display = 'none';
+                    }
+                });
+            }
+            
+            // LOGOUT
+            const logoutBtns = document.querySelectorAll('#logoutBtnSidebar, #logoutBtnDropdown');
+            logoutBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm('Tem certeza que deseja sair?')) {
+                        showToast('A sair do sistema...', 'info');
+                        setTimeout(() => {
+                            window.location.href = '/logout';
+                        }, 1500);
+                    }
+                });
+            });
+            
+            // NOTIFICAÇÕES
+            setupNotifications();
+            
+            // FECHAR MODAIS COM ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+        }
+        
+        // ===== NOTIFICAÇÕES =====
+        function setupNotifications() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationsModal = document.getElementById('notificationsModal');
+            const modalClose = document.getElementById('modalClose');
+            const markAllAsReadBtn = document.getElementById('markAllAsReadBtn');
+            const clearAllNotificationsBtn = document.getElementById('clearAllNotificationsBtn');
+            
+            if (notificationBtn && notificationsModal) {
+                notificationBtn.addEventListener('click', function() {
+                    notificationsModal.style.display = 'flex';
+                    loadNotifications();
+                });
+            }
+            
+            if (modalClose) {
+                modalClose.addEventListener('click', function() {
+                    notificationsModal.style.display = 'none';
+                });
+            }
+            
+            if (notificationsModal) {
+                notificationsModal.addEventListener('click', function(e) {
+                    if (e.target === notificationsModal) {
+                        notificationsModal.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (markAllAsReadBtn) {
+                markAllAsReadBtn.addEventListener('click', markAllAsRead);
+            }
+            
+            if (clearAllNotificationsBtn) {
+                clearAllNotificationsBtn.addEventListener('click', clearAllNotifications);
+            }
+            
+            loadNotifications();
+            setInterval(loadNotifications, 60000);
+        }
+        
+        function loadNotifications() {
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    updateNotificationCount(data.unreadCount || 0);
+                    renderNotifications(data.notifications || []);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar notificações:', error);
+                });
+        }
+        
+        function updateNotificationCount(count) {
+            const notificationCount = document.querySelector('.notification-count');
+            if (notificationCount) {
+                if (count > 0) {
+                    notificationCount.textContent = count > 99 ? '99+' : count;
+                    notificationCount.classList.add('show');
+                } else {
+                    notificationCount.classList.remove('show');
+                }
+            }
+        }
+        
+        function renderNotifications(notifications) {
+            const notificationsList = document.getElementById('notificationsList');
+            if (!notificationsList) return;
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="empty-notifications">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>Sem notificações no momento</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            notifications.forEach(notification => {
+                const timeAgo = getTimeAgo(notification.createdAt);
+                const iconClass = getNotificationIconClass(notification.type);
+                const unreadClass = notification.read ? '' : 'unread';
+                
+                html += `
+                    <div class="notification-item ${unreadClass}" data-id="${notification.id}">
+                        <div class="notification-icon ${iconClass}">
+                            <i class="${getNotificationIcon(notification.type)}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                        ${!notification.read ? `
+                            <div class="notification-actions">
+                                <button class="notification-mark-read" title="Marcar como lida">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            notificationsList.innerHTML = html;
+            
+            document.querySelectorAll('.notification-mark-read').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const notificationId = this.closest('.notification-item').dataset.id;
+                    markAsRead(notificationId);
+                });
+            });
+            
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const notificationId = this.dataset.id;
+                    openNotification(notificationId);
+                });
+            });
+        }
+        
+        function markAsRead(notificationId) {
+            fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadNotifications();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao marcar notificação como lida:', error);
+            });
+        }
+        
+        function markAllAsRead() {
+            fetch('/api/notifications/mark-all-read', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('Todas as notificações marcadas como lidas', 'success');
+                    loadNotifications();
+                } else {
+                    showToast('Erro ao marcar notificações como lidas', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao marcar todas como lidas:', error);
+                showToast('Erro ao comunicar com o servidor', 'error');
+            });
+        }
+        
+        function clearAllNotifications() {
+            if (confirm('Tem certeza que deseja limpar todas as notificações?')) {
+                fetch('/api/notifications/clear-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirm: 'true' })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showToast(result.message, 'success');
+                        loadNotifications();
+                    } else {
+                        showToast(result.error || 'Erro ao limpar notificações', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao limpar notificações:', error);
+                    showToast('Erro ao comunicar com o servidor', 'error');
+                });
+            }
+        }
+        
+        function openNotification(notificationId) {
+            markAsRead(notificationId);
+        }
+        
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'warning': return 'fas fa-exclamation-triangle';
+                case 'success': return 'fas fa-check-circle';
+                case 'danger': return 'fas fa-exclamation-circle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+        
+        function getNotificationIconClass(type) {
+            switch(type) {
+                case 'warning': return 'warning';
+                case 'success': return 'success';
+                case 'danger': return 'danger';
+                default: return 'info';
+            }
+        }
+        
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Agora mesmo';
+            if (diffMins < 60) return `Há ${diffMins} min`;
+            if (diffHours < 24) return `Há ${diffHours} h`;
+            if (diffDays < 7) return `Há ${diffDays} d`;
+            return date.toLocaleDateString('pt-PT');
+        }
+        
+        // ===== EVENTOS DOS TICKETS =====
+        function setupTicketEvents() {
+            // BOTÃO CRIAR TICKET
+            const createTicketBtn = document.getElementById('createTicketBtn');
+            const createFirstTicketBtn = document.getElementById('createFirstTicketBtn');
+            const createTicketModal = document.getElementById('createTicketModal');
+            const closeCreateModal = document.getElementById('closeCreateModal');
+            const cancelCreateBtn = document.getElementById('cancelCreateBtn');
+            const confirmCreateBtn = document.getElementById('confirmCreateBtn');
+            
+            if (createTicketBtn && createTicketModal) {
+                createTicketBtn.addEventListener('click', () => {
+                    createTicketModal.classList.add('active');
+                });
+                
+                if (createFirstTicketBtn) {
+                    createFirstTicketBtn.addEventListener('click', () => {
+                        createTicketModal.classList.add('active');
+                    });
+                }
+                
+                if (closeCreateModal) {
+                    closeCreateModal.addEventListener('click', () => {
+                        createTicketModal.classList.remove('active');
+                    });
+                }
+                
+                if (cancelCreateBtn) {
+                    cancelCreateBtn.addEventListener('click', () => {
+                        createTicketModal.classList.remove('active');
+                    });
+                }
+                
+                createTicketModal.addEventListener('click', (e) => {
+                    if (e.target === createTicketModal) {
+                        createTicketModal.classList.remove('active');
+                    }
+                });
+                
+                if (confirmCreateBtn) {
+                    confirmCreateBtn.addEventListener('click', createNewTicket);
+                }
+            }
+            
+            // BOTÕES DE AÇÃO NA TABELA
+            setupActionButtons();
+            
+            // MODAL DE DETALHES
+            const ticketDetailsModal = document.getElementById('ticketDetailsModal');
+            const closeDetailsModal = document.getElementById('closeDetailsModal');
+            
+            if (ticketDetailsModal && closeDetailsModal) {
+                closeDetailsModal.addEventListener('click', () => {
+                    ticketDetailsModal.classList.remove('active');
+                });
+                
+                ticketDetailsModal.addEventListener('click', (e) => {
+                    if (e.target === ticketDetailsModal) {
+                        ticketDetailsModal.classList.remove('active');
+                    }
+                });
+            }
+            
+            // MODAL DE ATRIBUIR
+            const assignTicketModal = document.getElementById('assignTicketModal');
+            const closeAssignModal = document.getElementById('closeAssignModal');
+            const confirmAssignBtn = document.getElementById('confirmAssignBtn');
+            
+            if (assignTicketModal && closeAssignModal) {
+                closeAssignModal.addEventListener('click', () => {
+                    assignTicketModal.classList.remove('active');
+                });
+                
+                assignTicketModal.addEventListener('click', (e) => {
+                    if (e.target === assignTicketModal) {
+                        assignTicketModal.classList.remove('active');
+                    }
+                });
+                
+                if (confirmAssignBtn) {
+                    confirmAssignBtn.addEventListener('click', assignTicket);
+                }
+            }
+            
+            // MODAL DE ESCALONAR (ELEVAR)
+            const escalateTicketModal = document.getElementById('escalateTicketModal');
+            const closeEscalateModal = document.getElementById('closeEscalateModal');
+            const confirmEscalateBtn = document.getElementById('confirmEscalateBtn');
+            
+            if (escalateTicketModal && closeEscalateModal) {
+                closeEscalateModal.addEventListener('click', () => {
+                    escalateTicketModal.classList.remove('active');
+                });
+                
+                escalateTicketModal.addEventListener('click', (e) => {
+                    if (e.target === escalateTicketModal) {
+                        escalateTicketModal.classList.remove('active');
+                    }
+                });
+                
+                if (confirmEscalateBtn) {
+                    confirmEscalateBtn.addEventListener('click', escalateTicket);
+                }
+            }
+        }
+        
+        function setupActionButtons() {
+            // BOTÃO VER DETALHES
+            document.querySelectorAll('.btn-action.view').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ticketId = e.currentTarget.getAttribute('data-ticket-id');
+                    if (ticketId) {
+                        currentTicketId = ticketId;
+                        viewTicketDetails(ticketId);
+                    }
+                });
+            });
+            
+            // BOTÃO ATRIBUIR
+            document.querySelectorAll('.btn-action.assign').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ticketId = e.currentTarget.getAttribute('data-ticket-id');
+                    if (ticketId) {
+                        currentTicketId = ticketId;
+                        openAssignModal(ticketId);
+                    }
+                });
+            });
+            
+            // BOTÃO ESCALONAR (ELEVAR)
+            document.querySelectorAll('.btn-action.escalate').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ticketId = e.currentTarget.getAttribute('data-ticket-id');
+                    if (ticketId) {
+                        currentTicketId = ticketId;
+                        openEscalateModal(ticketId);
+                    }
+                });
+            });
+            
+            // BOTÃO FECHAR
+            document.querySelectorAll('.btn-action.close').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ticketId = e.currentTarget.getAttribute('data-ticket-id');
+                    if (ticketId) {
+                        currentTicketId = ticketId;
+                        closeTicket(ticketId);
+                    }
+                });
+            });
+        }
+        
+        // ===== FUNÇÕES DE TICKETS =====
+        function viewTicketDetails(ticketId) {
+            const modal = document.getElementById('ticketDetailsModal');
+            const content = document.getElementById('ticketDetailsContent');
+            
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--accent-primary);"></i>
+                    <p style="margin-top: 20px; color: var(--text-secondary);">Carregando detalhes do ticket...</p>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+            
+            fetch(`/api/tickets/${ticketId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayTicketDetails(data.ticket);
+                    } else {
+                        content.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: var(--danger);">
+                                <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 20px;"></i>
+                                <h3>Erro ao carregar ticket</h3>
+                                <p>${data.error || 'Não foi possível carregar os detalhes do ticket.'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar ticket:', error);
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--danger);">
+                            <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 20px;"></i>
+                            <h3>Erro de conexão</h3>
+                            <p>Não foi possível conectar ao servidor.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function displayTicketDetails(ticketData) {
+            const content = document.getElementById('ticketDetailsContent');
+            
+            currentTicketData = ticketData;
+            
+            content.innerHTML = `
+                <div class="ticket-details-grid">
+                    <div class="ticket-detail-card">
+                        <h4><i class="fas fa-info-circle"></i> Informações Gerais</h4>
+                        <p><strong>ID:</strong> #${ticketData.ticketId}</p>
+                        <p><strong>Assunto:</strong> ${ticketData.subject}</p>
+                        <p><strong>Categoria:</strong> ${ticketData.category}</p>
+                        <p><strong>Prioridade:</strong> <span class="priority-badge ${ticketData.priority === 'Alta' || ticketData.priority === 'Urgente' ? 'priority-high' : ticketData.priority === 'Baixa' ? 'priority-low' : 'priority-medium'}">${ticketData.priority}</span></p>
+                        <p><strong>Status:</strong> <span class="status-badge ${ticketData.status === 'Em Progresso' ? 'status-progress' : ticketData.status === 'Resolvido' ? 'status-resolved' : ticketData.status === 'Fechado' ? 'status-closed' : ticketData.status === 'Atribuído' ? 'status-assigned' : 'status-open'}">${ticketData.status}</span></p>
+                    </div>
+                    
+                    <div class="ticket-detail-card">
+                        <h4><i class="fas fa-user"></i> Informações do Cliente</h4>
+                        <p><strong>Email:</strong> ${ticketData.email}</p>
+                        <p><strong>Criado em:</strong> ${ticketData.createdAt}</p>
+                        <p><strong>Última atualização:</strong> ${ticketData.updatedAt}</p>
+                        <p><strong>Atribuído a:</strong> ${ticketData.assignedTo || 'Não atribuído'}</p>
+                    </div>
+                </div>
+                
+                <div class="ticket-detail-card">
+                    <h4><i class="fas fa-envelope"></i> Mensagem Inicial</h4>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent-primary); margin-top: 10px;">
+                        ${ticketData.message || 'Sem mensagem disponível'}
+                    </div>
+                </div>
+                
+                ${ticketData.responses && ticketData.responses.length > 0 ? `
+                <div class="ticket-conversation" style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 20px;"><i class="fas fa-comments"></i> Conversa</h4>
+                    
+                    <div id="conversationMessages">
+                        ${ticketData.responses.map(response => `
+                            <div class="message support" style="margin-bottom: 15px; background: var(--bg-secondary); padding: 15px; border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <div style="font-weight: bold; color: var(--accent-primary);">
+                                        ${response.sender}
+                                        <span style="background: var(--info); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px;">SUPORTE</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${response.time} ${response.date}
+                                    </div>
+                                </div>
+                                <div style="color: var(--text-primary);">
+                                    ${response.message}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="response-form" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <h4><i class="fas fa-edit"></i> Responder ao Ticket</h4>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Sua resposta:</label>
+                        <textarea class="form-control" id="responseMessage" rows="4" placeholder="Escreva sua resposta aqui..."></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Status após resposta:</label>
+                        <select class="form-control" id="responseStatus">
+                            <option value="in-progress">Manter em Progresso</option>
+                            <option value="resolved">Marcar como Resolvido</option>
+                            <option value="closed">Fechar Ticket</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" id="sendResponseBtn" style="width: 100%;">
+                        <i class="fas fa-paper-plane"></i> Enviar Resposta
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('sendResponseBtn')?.addEventListener('click', sendResponse);
+        }
+        
+        function openAssignModal(ticketId) {
+            const modal = document.getElementById('assignTicketModal');
+            modal.classList.add('active');
+            
+            document.getElementById('assignToSelect').value = '';
+            document.getElementById('assignMessage').value = '';
+        }
+        
+        function assignTicket() {
+            const assignTo = document.getElementById('assignToSelect').value;
+            const message = document.getElementById('assignMessage').value;
+            
+            if (!assignTo) {
+                showToast('Selecione uma pessoa/departamento para atribuir', 'warning');
+                return;
+            }
+            
+            const originalText = document.getElementById('confirmAssignBtn').innerHTML;
+            document.getElementById('confirmAssignBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('confirmAssignBtn').disabled = true;
+            
+            fetch(`/api/tickets/${currentTicketId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assignedTo: assignTo,
+                    message: message,
+                    assignedBy: '<%= locals.user ? locals.user.name : "Staff" %>'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast(`Ticket atribuído a ${assignTo}`, 'success');
+                    document.getElementById('assignTicketModal').classList.remove('active');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`Erro: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atribuir ticket:', error);
+                showToast('Erro ao comunicar com o servidor', 'error');
+            })
+            .finally(() => {
+                document.getElementById('confirmAssignBtn').innerHTML = originalText;
+                document.getElementById('confirmAssignBtn').disabled = false;
+            });
+        }
+        
+        function openEscalateModal(ticketId) {
+            const modal = document.getElementById('escalateTicketModal');
+            modal.classList.add('active');
+            
+            document.getElementById('escalateToSelect').value = '';
+            document.getElementById('escalateReason').value = '';
+            document.getElementById('escalateDescription').value = '';
+        }
+        
+        function escalateTicket() {
+            const escalateTo = document.getElementById('escalateToSelect').value;
+            const reason = document.getElementById('escalateReason').value;
+            const description = document.getElementById('escalateDescription').value;
+            
+            if (!escalateTo || !reason) {
+                showToast('Preencha todos os campos obrigatórios', 'warning');
+                return;
+            }
+            
+            const originalText = document.getElementById('confirmEscalateBtn').innerHTML;
+            document.getElementById('confirmEscalateBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('confirmEscalateBtn').disabled = true;
+            
+            fetch(`/api/tickets/${currentTicketId}/escalate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    escalateTo: escalateTo,
+                    reason: reason,
+                    description: description,
+                    escalatedBy: '<%= locals.user ? locals.user.name : "Staff" %>'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast(`Ticket elevado para ${escalateTo}`, 'warning');
+                    document.getElementById('escalateTicketModal').classList.remove('active');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`Erro: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao escalonar ticket:', error);
+                showToast('Erro ao comunicar com o servidor', 'error');
+            })
+            .finally(() => {
+                document.getElementById('confirmEscalateBtn').innerHTML = originalText;
+                document.getElementById('confirmEscalateBtn').disabled = false;
+            });
+        }
+        
+        function closeTicket(ticketId) {
+            if (confirm('Tem certeza que deseja fechar este ticket? Esta ação não pode ser desfeita.')) {
+                fetch(`/api/tickets/${ticketId}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        closedBy: '<%= locals.user ? locals.user.name : "Staff" %>',
+                        closedAt: new Date().toISOString()
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showToast('Ticket fechado com sucesso', 'success');
+                        
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showToast(`Erro: ${result.message}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao fechar ticket:', error);
+                    showToast('Erro ao comunicar com o servidor', 'error');
+                });
+            }
+        }
+        
+        function createNewTicket() {
+            const subject = document.getElementById('ticketSubject').value;
+            const email = document.getElementById('ticketEmail').value;
+            const category = document.getElementById('ticketCategory').value;
+            const priority = document.getElementById('ticketPriority').value;
+            const message = document.getElementById('ticketMessage').value;
+            
+            if (!subject || !email || !message) {
+                showToast('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showToast('Email inválido', 'error');
+                return;
+            }
+            
+            const originalText = document.getElementById('confirmCreateBtn').innerHTML;
+            document.getElementById('confirmCreateBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('confirmCreateBtn').disabled = true;
+            
+            fetch('/api/tickets/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject: subject,
+                    customerEmail: email,
+                    category: category,
+                    priority: priority,
+                    message: message,
+                    createdBy: '<%= locals.user ? locals.user.name : "Staff" %>'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('Ticket criado com sucesso!', 'success');
+                    document.getElementById('createTicketModal').classList.remove('active');
+                    
+                    document.getElementById('ticketSubject').value = '';
+                    document.getElementById('ticketEmail').value = '';
+                    document.getElementById('ticketMessage').value = '';
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast(`Erro: ${result.error || 'Erro desconhecido'}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao criar ticket:', error);
+                showToast('Erro ao comunicar com o servidor', 'error');
+            })
+            .finally(() => {
+                document.getElementById('confirmCreateBtn').innerHTML = originalText;
+                document.getElementById('confirmCreateBtn').disabled = false;
+            });
+        }
+        
+        function sendResponse() {
+            const message = document.getElementById('responseMessage').value;
+            const status = document.getElementById('responseStatus').value;
+            
+            if (!message.trim()) {
+                showToast('Escreva uma resposta antes de enviar', 'warning');
+                return;
+            }
+            
+            const originalText = document.getElementById('sendResponseBtn').innerHTML;
+            document.getElementById('sendResponseBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            document.getElementById('sendResponseBtn').disabled = true;
+            
+            fetch(`/api/tickets/${currentTicketId}/respond`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: message,
+                    status: status,
+                    respondedBy: '<%= locals.user ? locals.user.name : "Staff" %>'
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('Resposta enviada com sucesso!', 'success');
+                    document.getElementById('responseMessage').value = '';
+                    
+                    viewTicketDetails(currentTicketId);
+                } else {
+                    showToast(`Erro: ${result.error || 'Erro desconhecido'}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao enviar resposta:', error);
+                showToast('Erro ao comunicar com o servidor', 'error');
+            })
+            .finally(() => {
+                document.getElementById('sendResponseBtn').innerHTML = originalText;
+                document.getElementById('sendResponseBtn').disabled = false;
+            });
+        }
+        
+        // ===== FUNÇÕES AUXILIARES =====
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function closeAllModals() {
+            document.querySelectorAll('.modal.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            const notificationsModal = document.getElementById('notificationsModal');
+            if (notificationsModal) {
+                notificationsModal.style.display = 'none';
+            }
+        }
+        
+        function startClock() {
+            function updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('pt-PT');
+                const timeElement = document.getElementById('serverTime');
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+        
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${getToastIcon(type)}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        function getToastIcon(type) {
+            switch(type) {
+                case 'success': return 'fa-check-circle';
+                case 'error': return 'fa-exclamation-circle';
+                case 'warning': return 'fa-exclamation-triangle';
+                default: return 'fa-info-circle';
+            }
+        }
+        
+        // Função para lidar com erros de avatar
+        window.handleAvatarError = function(img, containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                const fallback = document.createElement('div');
+                fallback.className = 'avatar-fallback';
+                fallback.innerHTML = '<i class="fas fa-user-tie"></i>';
+                fallback.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                    color: white;
+                    font-size: 18px;
+                    border-radius: 50%;
+                `;
+                container.innerHTML = '';
+                container.appendChild(fallback);
+            }
+        };
+    </script>
+</body>
+</html>

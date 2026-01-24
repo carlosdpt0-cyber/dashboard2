@@ -1,0 +1,57 @@
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="breadcrumb" id="breadcrumb">
+            <%= breadcrumb || 'Dashboard' %>
+        </div>
+    </div>
+    
+    <div class="topbar-right">
+        <!-- Theme Toggle in Topbar -->
+        <div class="theme-toggle" onclick="toggleTheme()">
+            <input type="checkbox" id="topbarThemeToggle">
+            <div class="toggle-switch"></div>
+            <span class="theme-label" id="topbarThemeLabel">Modo Escuro</span>
+        </div>
+        
+        <div class="notifications">
+            <button class="notification-btn" id="notificationBtn">
+                <i class="fas fa-bell"></i>
+                <span class="notification-count" id="notificationCount">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown">
+                <div class="notification-header">
+                    <h4>Notificações</h4>
+                    <button class="mark-all-read" onclick="markAllNotificationsRead()">
+                        Marcar todas como lidas
+                    </button>
+                </div>
+                <div class="notification-list" id="notificationList"></div>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            <div class="user-avatar" id="userAvatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-details">
+                <div class="user-name" id="topbarStaffName"><%= user.name || '---' %></div>
+                <div class="user-role" id="topbarStaffRole"><%= user.role || '---' %></div>
+            </div>
+            <div class="user-dropdown" id="userDropdown">
+                <a href="/dashboard/profile">
+                    <i class="fas fa-user-cog"></i> Meu Perfil
+                </a>
+                <a href="/dashboard/change-password">
+                    <i class="fas fa-key"></i> Alterar Password
+                </a>
+                <div class="divider"></div>
+                <a href="javascript:void(0)" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

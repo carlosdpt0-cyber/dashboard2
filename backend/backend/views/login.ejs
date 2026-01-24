@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'B7Uno | Sistema' %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== VARIÁVEIS DE COR NEUTRAS ===== */
+        :root {
+            --primary: #2563eb;       /* Azul profissional */
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #1f2937;     /* Cinza escuro */
+            --accent: #4f46e5;        /* Índigo */
+            --background: #f9fafb;    /* Cinza muito claro */
+            --surface: #ffffff;       /* Branco */
+            --surface-light: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --border: #e5e7eb;
+            --border-light: #d1d5db;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== RESET E BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        /* ===== CONTAINER PRINCIPAL ===== */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* ===== CABEÇALHO SIMPLES ===== */
+        .login-header {
+            padding: 32px 24px 24px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .logo h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* ===== CARD DE LOGIN ===== */
+        .login-card {
+            padding: 32px 24px;
+        }
+
+        .login-title {
+            margin-bottom: 24px;
+        }
+
+        .login-title h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* ===== MENSAGENS DE ERRO ===== */
+        .error-message {
+            background: rgba(220, 38, 38, 0.05);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.875rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .error-message i {
+            margin-top: 1px;
+            flex-shrink: 0;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== FORMULÁRIO ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1rem;
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-secondary);
+        }
+
+        /* ===== BOTÃO DE LOGIN ===== */
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ===== INFORMAÇÕES ADICIONAIS ===== */
+        .login-footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-info {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .server-info {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        /* ===== RODAPÉ DA PÁGINA ===== */
+        .page-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            padding: 0 20px;
+        }
+
+        /* ===== RESPONSIVIDADE ===== */
+        @media (max-width: 480px) {
+            .login-container {
+                border-radius: 8px;
+            }
+            
+            .login-header {
+                padding: 24px 20px 20px;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+            
+            .login-card {
+                padding: 24px 20px;
+            }
+            
+            .form-input {
+                padding: 11px 14px;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* ===== ANIMAÇÕES SUAVES ===== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .login-container {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* ===== ESTADOS DO FORMULÁRIO ===== */
+        .form-input:disabled,
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-btn.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .login-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Container Principal -->
+    <div class="login-container">
+        <!-- Cabeçalho com Logo -->
+        <div class="login-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h1>B7Uno</h1>
+                <div class="logo-subtitle">Sistema de Gestão</div>
+            </div>
+        </div>
+
+        <!-- Card de Login -->
+        <div class="login-card">
+            <div class="login-title">
+                <h2>Entrar no sistema</h2>
+                <p class="login-subtitle">
+                    Utilize as suas credenciais para aceder à plataforma
+                </p>
+            </div>
+
+            <!-- Mensagem de Erro -->
+            <% if (error) { %>
+                <div class="error-message show" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span><%= error %></span>
+                </div>
+            <% } else { %>
+                <div class="error-message" id="errorMessage"></div>
+            <% } %>
+
+            <!-- Formulário -->
+            <form id="loginForm" method="POST" action="/login">
+                <div class="form-group">
+                    <label class="form-label" for="email">
+                        Email
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="seu.email@empresa.pt" 
+                            required
+                            value="<%= email || '' %>"
+                            autocomplete="email"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        Palavra-passe
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="••••••••" 
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn" id="submitBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Entrar
+                </button>
+            </form>
+
+            <!-- Informações Adicionais -->
+            <div class="login-footer">
+                <div class="footer-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Acesso restrito a utilizadores autorizados</span>
+                </div>
+                <div class="server-info">
+                    <div class="status-indicator"></div>
+                    <span>Sistema Online</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé da Página -->
+    <div class="page-footer">
+        © <%= new Date().getFullYear() %> B7Uno. Todos os direitos reservados.
+    </div>
+
+    <!-- JavaScript SIMPLIFICADO -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos DOM
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submitBtn');
+            const loginForm = document.getElementById('loginForm');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // ===== ALTERNAR VISIBILIDADE DA PASSWORD =====
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Alternar ícone
+                    const icon = this.querySelector('i');
+                    if (type === 'text') {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+
+            // ===== VALIDAÇÃO SIMPLES DO FORMULÁRIO =====
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    const email = document.getElementById('email').value.trim();
+                    const password = document.getElementById('password').value.trim();
+                    
+                    // Validação básica
+                    if (!email || !password) {
+                        e.preventDefault();
+                        showError('Por favor, preencha todos os campos');
+                        return false;
+                    }
+                    
+                    // Validação de email simples
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        e.preventDefault();
+                        showError('Por favor, insira um email válido');
+                        return false;
+                    }
+                    
+                    // Mostrar estado de carregamento
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A processar...';
+                    
+                    // Permitir o envio do formulário
+                    return true;
+                });
+            }
+
+            // ===== FUNÇÃO PARA MOSTRAR ERRO =====
+            function showError(message) {
+                if (errorMessage) {
+                    errorMessage.innerHTML = `
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>${message}</span>
+                    `;
+                    errorMessage.classList.add('show');
+                    
+                    // Remover após 5 segundos
+                    setTimeout(() => {
+                        errorMessage.classList.remove('show');
+                    }, 5000);
+                }
+            }
+
+            // ===== LIMPAR MENSAGENS DE ERRO AO DIGITAR =====
+            const inputs = document.querySelectorAll('#email, #password');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (errorMessage && errorMessage.classList.contains('show')) {
+                        errorMessage.classList.remove('show');
+                    }
+                    
+                    // Reativar botão se estava desativado
+                    if (submitBtn.disabled) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+                    }
+                });
+            });
+
+            // ===== AUTO-FOCUS NO EMAIL =====
+            setTimeout(() => {
+                const emailInput = document.getElementById('email');
+                if (emailInput && !emailInput.value) {
+                    emailInput.focus();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

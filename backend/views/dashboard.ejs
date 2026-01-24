@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'B7Uno Casino | Dashboard Essencial' %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* ===== DASHBOARD ESSENCIAL ===== */
+        .dashboard-essencial {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .essencial-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .essencial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-primary);
+        }
+        
+        .essencial-card.critical {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+        
+        .essencial-card.warning {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+        
+        .essencial-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .essencial-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--accent-primary);
+        }
+        
+        .essencial-icon.cash {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .essencial-icon.players {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+        }
+        
+        .essencial-icon.support {
+            background: rgba(111, 66, 193, 0.1);
+            color: #6f42c1;
+        }
+        
+        .essencial-icon.alert {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        .essencial-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .essencial-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .essencial-details {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+        
+        .trend.down {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+        
+        /* ===== MARKET REVENUE ===== */
+        .market-revenue {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .market-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .market-item:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-3px);
+        }
+        
+        .market-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .market-flag {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+            background: #007bff;
+        }
+        
+        .market-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .market-stats {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        .market-amount {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+        
+        /* ===== CRITICAL ALERTS ===== */
+        .alerts-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+        
+        .alert-item.critical {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+        
+        .alert-item.warning {
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+        }
+        
+        .alert-icon.critical {
+            background: #dc3545;
+        }
+        
+        .alert-icon.warning {
+            background: #ffc107;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .alert-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .alert-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        /* ===== OPERATIONAL DATA ===== */
+        .operational-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .data-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .data-table {
+            margin-top: 15px;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .data-value {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+        
+        .data-value.good {
+            color: #28a745;
+        }
+        
+        .data-value.bad {
+            color: #dc3545;
+        }
+        
+        /* ===== EXPORT SECTION ===== */
+        .export-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .export-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .export-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-5px);
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .export-icon {
+            font-size: 32px;
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+        }
+        
+        .export-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .export-desc {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        /* ===== QUICK ACTIONS ===== */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .quick-action {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .quick-action:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+            transform: translateY(-3px);
+        }
+        
+        .quick-action:hover .action-icon {
+            color: white;
+        }
+        
+        .action-icon {
+            font-size: 20px;
+            color: var(--accent-primary);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 8px;
+        }
+        
+        .action-text {
+            flex: 1;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        
+        .action-desc {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .dashboard-essencial {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .operational-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-essencial {
+                grid-template-columns: 1fr;
+            }
+            
+            .revenue-grid,
+            .export-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        
+        .badge.critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge.warning {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .badge.success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge.info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        /* ===== STATUS INDICATORS ===== */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .status-dot.online {
+            background: #28a745;
+            box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-dot.offline {
+            background: #6c757d;
+        }
+        
+        .status-dot.pending {
+            background: #ffc107;
+            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <% 
+    // DECLARAÇÃO DE VARIÁVEIS COM DADOS REAIS DO SERVER.JS
+    const localRecentPlayers = typeof recentPlayers !== 'undefined' ? recentPlayers : [];
+    const localRecentWithdrawals = typeof recentWithdrawals !== 'undefined' ? recentWithdrawals : [];
+    const localRecentTickets = typeof recentTickets !== 'undefined' ? recentTickets : [];
+    const localAcceptedConfidentiality = typeof acceptedConfidentiality !== 'undefined' ? acceptedConfidentiality : false;
+
+    // Stats com dados reais do server.js
+    const localStats = stats || {};
+    const safeStats = {
+        pendingWithdrawals: localStats.pendingWithdrawals || 0,
+        onlinePlayers: localStats.onlinePlayers || 0,
+        totalPlayers: localStats.totalPlayers || 0,
+        unresolvedAlerts: localStats.unresolvedAlerts || 0,
+        withdrawalsAmount: localStats.withdrawalsAmount || 0,
+        playerPercentage: localStats.playerPercentage || 0,
+        openTickets: localStats.openTickets || 0,
+        assignedTickets: localStats.assignedTickets || 0,
+        recentEmails: localStats.recentEmails || 0,
+        unreadLogs: localStats.unreadLogs || 0,
+        totalDeposits: localStats.totalDeposits || 0,
+        avgDeposit: localStats.avgDeposit || 0,
+        conversionRate: localStats.conversionRate || 0,
+        betVolume: localStats.betVolume || 0,
+        playerSatisfaction: localStats.playerSatisfaction || 0
+    };
+    
+    // Calcular tendências baseadas em dados reais do server.js
+    const withdrawalTrend = localStats.withdrawalTrend || 0;
+    const playerTrend = localStats.playerTrend || 0;
+    const ticketTrend = localStats.ticketTrend || 0;
+    const emailTrend = localStats.emailTrend || 0;
+    
+    // DADOS PARA DASHBOARD ESSENCIAL
+    // Estes dados são calculados no server.js e passados aqui
+    
+    // Dados de cash flow diário
+    const cashFlow = {
+        today: {
+            deposits: safeStats.totalDeposits || 0,
+            withdrawals: safeStats.withdrawalsAmount || 0,
+            balance: (safeStats.totalDeposits || 0) - (safeStats.withdrawalsAmount || 0)
+        },
+        yesterday: {
+            deposits: 0, // Será calculado no server.js
+            withdrawals: 0,
+            balance: 0
+        }
+    };
+    
+    // Calcular crescimento do cash flow (simplificado)
+    const cashFlowGrowth = withdrawalTrend || 0;
+    
+    // Jogadores ativos (vem do server.js)
+    const activePlayers24h = safeStats.onlinePlayers || 0;
+    const totalPlayers = safeStats.totalPlayers || 0;
+    const playerGrowth = playerTrend || 0;
+    
+    // Tickets de suporte
+    const supportTickets = {
+        open: safeStats.openTickets || 0,
+        inProgress: safeStats.assignedTickets || 0,
+        resolved: 0 // Será calculado no server.js
+    };
+    
+    // Dados financeiros
+    const financialData = {
+        totalDeposits: safeStats.totalDeposits || 0,
+        totalWithdrawals: safeStats.withdrawalsAmount || 0,
+        pendingWithdrawals: safeStats.pendingWithdrawals || 0,
+        avgDeposit: safeStats.avgDeposit || 0,
+        avgWithdrawal: safeStats.withdrawalsAmount > 0 && safeStats.pendingWithdrawals > 0 
+            ? (safeStats.withdrawalsAmount / safeStats.pendingWithdrawals).toFixed(2) 
+            : 0,
+        conversionRate: safeStats.conversionRate || 0,
+        holdRate: safeStats.totalDeposits > 0 
+            ? (((safeStats.totalDeposits - safeStats.withdrawalsAmount) / safeStats.totalDeposits) * 100).toFixed(1)
+            : 0
+    };
+    
+    // Ratio depósitos/levantamentos
+    const depositRatio = safeStats.withdrawalsAmount > 0 
+        ? (safeStats.totalDeposits / safeStats.withdrawalsAmount).toFixed(2)
+        : '∞';
+    
+    // Receita por mercado (dados de exemplo - serão do server.js)
+    const revenueData = {
+        markets: [
+            { country: 'Portugal', amount: 15000, transactions: 120 },
+            { country: 'Brasil', amount: 12000, transactions: 95 },
+            { country: 'Espanha', amount: 8000, transactions: 70 },
+            { country: 'Angola', amount: 6000, transactions: 50 },
+            { country: 'Moçambique', amount: 4000, transactions: 35 }
+        ],
+        total: 45000
+    };
+    
+    // Alertas críticos
+    const criticalAlerts = [];
+    
+    // Adicionar alerta se houver tickets abertos
+    if (safeStats.openTickets > 5) {
+        criticalAlerts.push({
+            type: 'ticket',
+            severity: 'warning',
+            title: 'Muitos tickets abertos',
+            description: `${safeStats.openTickets} tickets abertos necessitam atenção`,
+            time: new Date()
+        });
+    }
+    
+    // Adicionar alerta se houver levantamentos pendentes
+    if (safeStats.pendingWithdrawals > 10) {
+        criticalAlerts.push({
+            type: 'withdrawal',
+            severity: 'warning',
+            title: 'Levantamentos pendentes',
+            description: `${safeStats.pendingWithdrawals} levantamentos aguardam processamento`,
+            time: new Date()
+        });
+    }
+    
+    // Adicionar alerta se cash flow negativo
+    if (cashFlow.today.balance < 0) {
+        criticalAlerts.push({
+            type: 'cashflow',
+            severity: 'critical',
+            title: 'Cash Flow Negativo',
+            description: `Saldo negativo hoje: €${cashFlow.today.balance.toFixed(2)}`,
+            time: new Date()
+        });
+    }
+    
+    // VERIFICAÇÃO DE PERMISSÕES CONFORME SERVER.JS
+    const isAdmin = user && user.role === 'admin';
+    
+    // Definir permissões baseadas no role do usuário conforme server.js
+    let userPermissions = [];
+    if (isAdmin) {
+        userPermissions = ['all'];
+    } else {
+        switch(user.role) {
+            case 'support_manager':
+                userPermissions = ['view_dashboard', 'view_players', 'view_withdrawals', 'view_payments', 'view_support', 'view_staff', 'view_email', 'view_logs', 'view_settings', 'process_withdrawals', 'process_payments', 'assign_tickets', 'send_emails', 'manage_staff', 'manage_settings'];
+                break;
+            case 'support':
+                userPermissions = ['view_dashboard', 'view_players', 'view_withdrawals', 'view_payments', 'view_support', 'view_email'];
+                break;
+            case 'finance':
+                userPermissions = ['view_dashboard', 'view_players', 'view_withdrawals', 'view_payments', 'process_withdrawals', 'process_payments'];
+                break;
+            case 'moderator':
+                userPermissions = ['view_dashboard', 'view_players', 'view_support'];
+                break;
+            case 'viewer':
+                userPermissions = ['view_dashboard', 'view_players'];
+                break;
+            default:
+                userPermissions = ['view_dashboard'];
+        }
+    }
+    
+    // Função para verificar permissões conforme server.js
+    const hasPermission = (permission) => {
+        return isAdmin || userPermissions.includes(permission) || userPermissions.includes('all');
+    };
+    
+    // Determinar quais links de menu devem estar ativos
+    const canViewPlayers = hasPermission('view_players');
+    const canViewWithdrawals = hasPermission('view_withdrawals');
+    const canViewSupport = hasPermission('view_support');
+    const canViewEmail = hasPermission('view_email');
+    const canViewStaff = hasPermission('view_staff');
+    const canViewLogs = hasPermission('view_logs');
+    const canViewSettings = hasPermission('view_settings');
+    %>
+    
+    <!-- ===== POPUP DE CONFIDENCIALIDADE ===== -->
+    <% if (!localAcceptedConfidentiality) { %>
+    <div class="confidentiality-modal" id="confidentialityModal">
+        <div class="confidentiality-content">
+            <i class="fas fa-shield-alt confidentiality-icon"></i>
+            <h1 class="confidentiality-title">AVISO DE CONFIDENCIALIDADE</h1>
+            <h2 class="confidentiality-subtitle">B7UNO CASINO - DASHBOARD ESSENCIAL</h2>
+            <div class="confidentiality-text">
+                <p>Dashboard operacional para monitorização e ação imediata</p>
+                <div class="confidentiality-warning">
+                    <i class="fas fa-eye"></i>
+                    <p>⚠️ TODAS AS AÇÕES SÃO MONITORIZADAS ⚠️</p>
+                </div>
+            </div>
+            <div class="confidentiality-buttons">
+                <button class="confidentiality-btn accept" id="acceptConfidentiality">
+                    <i class="fas fa-check-circle"></i>
+                    ACEITAR
+                </button>
+                <button class="confidentiality-btn reject" id="rejectConfidentiality">
+                    <i class="fas fa-times-circle"></i>
+                    SAIR
+                </button>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Main Container -->
+    <div class="app-container" id="mainApp" style="<%= !localAcceptedConfidentiality ? 'display: none;' : 'display: flex;' %>">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <h2>B7Uno <span class="b7uno-badge">ESSENCIAL</span></h2>
+                <div class="user-mini-info">
+                    <div class="user-mini-avatar" id="sidebarAvatar">
+                        <% if (user && user.photo) { %>
+                            <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                 alt="<%= user.name %>"
+                                 onerror="handleAvatarError(this, 'sidebarAvatar')">
+                        <% } else { %>
+                            <i class="fas fa-user-tie"></i>
+                        <% } %>
+                    </div>
+                    <div class="user-mini-details">
+                        <span id="sidebarStaffName"><%= user.name %></span>
+                        <small id="sidebarStaffRole"><%= user.role.toUpperCase() %></small>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="menu">
+                <li><a href="/dashboard" class="active">
+                    <i class="fas fa-tachometer-alt"></i><span> Dashboard</span>
+                </a></li>
+                
+                <!-- Jogadores -->
+                <% if (canViewPlayers) { %>
+                <li><a href="/players">
+                    <i class="fas fa-users"></i><span> Jogadores</span>
+                    <% if (safeStats.totalPlayers > 0) { %>
+                        <span class="badge"><%= safeStats.totalPlayers > 99 ? '99+' : safeStats.totalPlayers %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-users"></i><span> Jogadores</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Levantamentos -->
+                <% if (canViewWithdrawals) { %>
+                <li><a href="/withdrawals">
+                    <i class="fas fa-money-bill-wave"></i><span> Levantamentos</span>
+                    <% if (safeStats.pendingWithdrawals > 0) { %>
+                        <span class="badge warning"><%= safeStats.pendingWithdrawals %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-money-bill-wave"></i><span> Levantamentos</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Suporte -->
+                <% if (canViewSupport) { %>
+                <li><a href="/support">
+                    <i class="fas fa-headset"></i><span> Support</span>
+                    <% if (safeStats.openTickets > 0) { %>
+                        <span class="badge warning"><%= safeStats.openTickets %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-headset"></i><span> Support</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Email -->
+                <% if (canViewEmail) { %>
+                <li><a href="/email">
+                    <i class="fas fa-envelope"></i><span> Email</span>
+                    <% if (safeStats.recentEmails > 0) { %>
+                        <span class="badge"><%= safeStats.recentEmails %></span>
+                    <% } %>
+                </a></li>
+                <% } else { %>
+                <li><a href="#" class="menu-item-disabled" title="Sem permissão">
+                    <i class="fas fa-envelope"></i><span> Email</span>
+                </a></li>
+                <% } %>
+                
+                <!-- Tema -->
+                <li>
+                    <div class="theme-toggle" id="sidebarThemeToggle">
+                        <input type="checkbox" id="sidebarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="sidebarThemeLabel">Modo Escuro</span>
+                    </div>
+                </li>
+                
+                <!-- Logout -->
+                <li>
+                    <a href="#" id="logoutBtnSidebar">
+                        <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator online"></div>
+                    <span>Sistema Online</span>
+                </div>
+                <div class="server-time" id="serverTime">--:--:--</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb" id="breadcrumb">
+                        Dashboard Essencial - Visão Diária
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle" id="topbarThemeToggle">
+                        <input type="checkbox" id="topbarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="topbarThemeLabel">Modo Escuro</span>
+                    </div>
+                    
+                    <!-- Notificações -->
+                    <div class="notifications">
+                        <button class="notification-btn" id="notificationBtn">
+                            <i class="fas fa-bell"></i>
+                            <% if (criticalAlerts.length > 0 || safeStats.unresolvedAlerts > 0) { %>
+                                <span class="notification-count show">
+                                    <%= (criticalAlerts.length + safeStats.unresolvedAlerts) > 9 ? '9+' : (criticalAlerts.length + safeStats.unresolvedAlerts) %>
+                                </span>
+                            <% } %>
+                        </button>
+                    </div>
+                    
+                    <!-- User Profile -->
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">
+                            <% if (user && user.photo) { %>
+                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= user.name %>" 
+                                     id="userAvatarImage"
+                                     onerror="handleAvatarError(this, 'userAvatar')">
+                            <% } else { %>
+                                <span id="userInitials"><%= user.name.split(' ').map(n => n[0]).join('').toUpperCase() %></span>
+                            <% } %>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" id="topbarStaffName"><%= user.name %></div>
+                            <div class="user-role" id="topbarStaffRole"><%= user.role.toUpperCase() %></div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-secondary); margin-left: 5px;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Dropdown (MANTIDO IGUAL AO ORIGINAL) -->
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <div class="user-info">
+                        <div class="user-avatar" id="dropdownAvatar">
+                            <% if (user && user.photo) { %>
+                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= user.name %>" 
+                                     id="dropdownAvatarImage"
+                                     onerror="handleAvatarError(this, 'dropdownAvatar')">
+                            <% } else { %>
+                                <span id="dropdownInitials"><%= user.name.split(' ').map(n => n[0]).join('').toUpperCase() %></span>
+                            <% } %>
+                        </div>
+                        <div>
+                            <div class="user-name" id="dropdownUserName"><%= user.name %></div>
+                            <div class="user-role"><%= user.role.toUpperCase() %></div>
+                            <div class="user-email" style="font-size: 11px; color: var(--text-secondary);">
+                                <%= user.email %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <a href="/profile" class="dropdown-item" id="myProfileLink">
+                        <i class="fas fa-user"></i>
+                        <span>Meu Perfil</span>
+                    </a>
+                    <% if (canViewSettings) { %>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Definições</span>
+                        </a>
+                    <% } %>
+                    <% if (canViewLogs) { %>
+                        <a href="/logs" class="dropdown-item">
+                            <i class="fas fa-history"></i>
+                            <span>Histórico</span>
+                        </a>
+                    <% } %>
+                </div>
+                <div class="dropdown-footer">
+                    <button class="btn btn-secondary" id="logoutBtnDropdown">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Header -->
+                <div class="dashboard-header" style="margin-bottom: 30px;">
+                    <h1 style="font-size: 24px; margin-bottom: 8px;">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard Essencial - Visão Operacional
+                    </h1>
+                    <p style="color: var(--text-secondary); font-size: 14px;">
+                        Monitorização e ação imediata | Atualizado: <span id="lastUpdate"><%= new Date().toLocaleTimeString('pt-PT') %></span>
+                        <br>
+                        <small style="font-size: 12px;">
+                            Bem-vindo, <strong><%= user.name %></strong> | 
+                            Último login: <%= user.lastLogin ? new Date(user.lastLogin).toLocaleString('pt-PT') : 'Nunca' %>
+                        </small>
+                    </p>
+                </div>
+
+                <!-- ===== DASHBOARD ESSENCIAL ===== -->
+                <div class="dashboard-essencial">
+                    <!-- Cash Flow Diário -->
+                    <div class="essencial-card <%= cashFlow.today.balance < 0 ? 'critical' : '' %>"
+                         onclick="window.location.href='<%= canViewWithdrawals ? '/withdrawals' : '#' %>'">
+                        <div class="essencial-header">
+                            <div class="essencial-icon cash">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="trend <%= cashFlowGrowth >= 0 ? '' : 'down' %>">
+                                <i class="fas fa-arrow-<%= cashFlowGrowth >= 0 ? 'up' : 'down' %>"></i>
+                                <%= Math.abs(cashFlowGrowth) %>%
+                            </div>
+                        </div>
+                        <div class="essencial-title">Cash Flow Diário</div>
+                        <div class="essencial-value <%= cashFlow.today.balance >= 0 ? '' : 'critical' %>">
+                            €<%= cashFlow.today.balance.toFixed(2) %>
+                        </div>
+                        <div class="essencial-details">
+                            <span>Entradas: €<%= cashFlow.today.deposits.toFixed(2) %></span>
+                            <span>|</span>
+                            <span>Saídas: €<%= cashFlow.today.withdrawals.toFixed(2) %></span>
+                        </div>
+                    </div>
+
+                    <!-- Depósitos vs Levantamentos -->
+                    <div class="essencial-card" 
+                         onclick="window.location.href='<%= canViewWithdrawals ? '/withdrawals' : '#' %>'">
+                        <div class="essencial-header">
+                            <div class="essencial-icon">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="trend <%= depositRatio !== '∞' && parseFloat(depositRatio) >= 1.5 ? '' : 'down' %>">
+                                <i class="fas fa-<%= depositRatio !== '∞' && parseFloat(depositRatio) >= 1.5 ? 'check' : 'exclamation' %>"></i>
+                                Ratio: <%= depositRatio %>
+                            </div>
+                        </div>
+                        <div class="essencial-title">Depósitos / Levantamentos</div>
+                        <div class="essencial-value">
+                            <%= depositRatio %>:1
+                        </div>
+                        <div class="essencial-details">
+                            <span style="color: #28a745;">+€<%= financialData.totalDeposits.toFixed(2) %></span>
+                            <span>|</span>
+                            <span style="color: #dc3545;">-€<%= financialData.totalWithdrawals.toFixed(2) %></span>
+                        </div>
+                    </div>
+
+                    <!-- Jogadores Ativos -->
+                    <div class="essencial-card" 
+                         onclick="window.location.href='<%= canViewPlayers ? '/players' : '#' %>'">
+                        <div class="essencial-header">
+                            <div class="essencial-icon players">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="trend <%= playerGrowth >= 0 ? '' : 'down' %>">
+                                <i class="fas fa-arrow-<%= playerGrowth >= 0 ? 'up' : 'down' %>"></i>
+                                <%= Math.abs(playerGrowth) %>%
+                            </div>
+                        </div>
+                        <div class="essencial-title">Jogadores Ativos (24h)</div>
+                        <div class="essencial-value"><%= activePlayers24h %></div>
+                        <div class="essencial-details">
+                            <span class="status-dot online"></span>
+                            <span>Online: <%= activePlayers24h %></span>
+                            <span>|</span>
+                            <span>Total: <%= totalPlayers %></span>
+                        </div>
+                    </div>
+
+                    <!-- Tickets de Suporte -->
+                    <div class="essencial-card <%= supportTickets.open > 5 ? 'warning' : '' %>"
+                         onclick="window.location.href='<%= canViewSupport ? '/support' : '#' %>'">
+                        <div class="essencial-header">
+                            <div class="essencial-icon support">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div class="trend <%= supportTickets.open > 0 ? 'down' : '' %>">
+                                <i class="fas fa-<%= supportTickets.open > 0 ? 'exclamation' : 'check' %>"></i>
+                                <%= supportTickets.open %> pendentes
+                            </div>
+                        </div>
+                        <div class="essencial-title">Tickets de Suporte</div>
+                        <div class="essencial-value"><%= supportTickets.open + supportTickets.inProgress %></div>
+                        <div class="essencial-details">
+                            <span class="badge <%= supportTickets.open > 5 ? 'warning' : 'success' %>">
+                                <%= supportTickets.open %> abertos
+                            </span>
+                            <span class="badge info">
+                                <%= supportTickets.inProgress %> em progresso
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== RECEITA POR MERCADO ===== -->
+                <div class="market-revenue">
+                    <div class="section-header">
+                        <h3><i class="fas fa-globe-europe"></i> Receita por Mercado (Últimos 30 dias)</h3>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            Total: €<%= revenueData.total.toFixed(2) %>
+                        </div>
+                    </div>
+                    
+                    <div class="revenue-grid">
+                        <% revenueData.markets.forEach((market, index) => { 
+                            const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'];
+                        %>
+                            <div class="market-item">
+                                <div class="market-info">
+                                    <div class="market-flag" style="background: <%= colors[index % colors.length] %>;">
+                                        <%= market.country.substring(0, 2).toUpperCase() %>
+                                    </div>
+                                    <div>
+                                        <div class="market-name"><%= market.country %></div>
+                                        <div class="market-stats"><%= market.transactions %> transações</div>
+                                    </div>
+                                </div>
+                                <div class="market-amount">€<%= market.amount.toFixed(2) %></div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <!-- ===== ALERTAS CRÍTICOS ===== -->
+                <% if (criticalAlerts.length > 0) { %>
+                <div class="alerts-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Alertas Críticos</h3>
+                        <span class="badge critical"><%= criticalAlerts.length %></span>
+                    </div>
+                    
+                    <div class="alert-list">
+                        <% criticalAlerts.slice(0, 3).forEach((alert) => { %>
+                            <div class="alert-item <%= alert.severity %>">
+                                <div class="alert-icon <%= alert.severity %>">
+                                    <i class="fas fa-<%= alert.severity === 'critical' ? 'exclamation' : 'exclamation-triangle' %>"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title"><%= alert.title %></div>
+                                    <div class="alert-desc"><%= alert.description %></div>
+                                    <div class="alert-time">
+                                        <%= new Date(alert.time).toLocaleString('pt-PT', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            day: '2-digit',
+                                            month: '2-digit'
+                                        }) %>
+                                    </div>
+                                </div>
+                                <% if (alert.type === 'ticket' && canViewSupport) { %>
+                                    <button class="btn-view-all" onclick="window.location.href='/support'" 
+                                            style="padding: 8px 16px; font-size: 12px; white-space: nowrap;">
+                                        Ver Ticket
+                                    </button>
+                                <% } %>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- ===== DADOS OPERACIONAIS ===== -->
+                <div class="operational-grid">
+                    <!-- Dados Financeiros -->
+                    <div class="data-card">
+                        <div class="section-header" style="margin-bottom: 20px;">
+                            <h3><i class="fas fa-coins"></i> Dados Financeiros</h3>
+                        </div>
+                        
+                        <div class="data-table">
+                            <div class="data-row">
+                                <div class="data-label">Saldo Total Jogadores</div>
+                                <div class="data-value">
+                                    <% 
+                                        // Este valor virá do server.js
+                                        const totalBalance = 0; // Será calculado no server.js
+                                    %>
+                                    €<%= totalBalance.toFixed(2) %>
+                                </div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Média Depósito</div>
+                                <div class="data-value">€<%= financialData.avgDeposit.toFixed(2) %></div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Média Levantamento</div>
+                                <div class="data-value">€<%= financialData.avgWithdrawal.toFixed(2) %></div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Taxa Conversão</div>
+                                <div class="data-value <%= financialData.conversionRate > 5 ? 'good' : 'bad' %>">
+                                    <%= financialData.conversionRate.toFixed(1) %>%
+                                </div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Hold % (Estimado)</div>
+                                <div class="data-value <%= parseFloat(financialData.holdRate) > 5 ? 'good' : 'bad' %>">
+                                    <%= financialData.holdRate %>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estatísticas Jogadores -->
+                    <div class="data-card">
+                        <div class="section-header" style="margin-bottom: 20px;">
+                            <h3><i class="fas fa-user-chart"></i> Estatísticas Jogadores</h3>
+                        </div>
+                        
+                        <div class="data-table">
+                            <div class="data-row">
+                                <div class="data-label">Total Jogadores</div>
+                                <div class="data-value"><%= totalPlayers %></div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Novos (7 dias)</div>
+                                <div class="data-value">
+                                    <% 
+                                        // Este valor virá do server.js
+                                        const newPlayers7d = 0; // Será calculado no server.js
+                                    %>
+                                    <%= newPlayers7d %>
+                                </div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Jogadores VIP</div>
+                                <div class="data-value">
+                                    <% 
+                                        // Este valor virá do server.js
+                                        const vipPlayers = 0; // Será calculado no server.js
+                                    %>
+                                    <%= vipPlayers %>
+                                </div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">ARPU (Estimado)</div>
+                                <div class="data-value">
+                                    <% 
+                                        // ARPU = Average Revenue Per User
+                                        const arpu = totalPlayers > 0 ? (revenueData.total / totalPlayers).toFixed(2) : '0.00';
+                                    %>
+                                    €<%= arpu %>
+                                </div>
+                            </div>
+                            
+                            <div class="data-row">
+                                <div class="data-label">Satisfação</div>
+                                <div class="data-value <%= safeStats.playerSatisfaction > 7 ? 'good' : 'bad' %>">
+                                    <%= safeStats.playerSatisfaction.toFixed(1) %>/10
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== EXPORTAÇÃO PARA BI ===== -->
+                <div class="export-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-database"></i> Dados para Análise Avançada (BI)</h3>
+                    </div>
+                    
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
+                        Estes dados são automaticamente registrados para cálculo de indicadores avançados:
+                        <strong>Forecast, ARPU, LTV, CAC, Hold %, Margem por mercado e análise de risco</strong>.
+                    </p>
+                    
+                    <div class="export-grid">
+                        <div class="export-card" id="exportPlayers">
+                            <div class="export-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="export-title">Detalhes Jogadores</div>
+                            <div class="export-desc">Receita por jogador, frequência, histórico</div>
+                        </div>
+                        
+                        <div class="export-card" id="exportFinancial">
+                            <div class="export-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="export-title">Histórico Financeiro</div>
+                            <div class="export-desc">Depósitos/levantamentos por mercado</div>
+                        </div>
+                        
+                        <div class="export-card" id="exportMarketing">
+                            <div class="export-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="export-title">Dados Marketing</div>
+                            <div class="export-desc">CAC por canal, gastos, performance</div>
+                        </div>
+                        
+                        <div class="export-card" id="exportGames">
+                            <div class="export-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="export-title">Performance Jogos</div>
+                            <div class="export-desc">Hold % por jogo e provider</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== AÇÕES RÁPIDAS ===== -->
+                <div class="quick-actions">
+                    <% if (canViewPlayers) { %>
+                    <div class="quick-action" onclick="window.location.href='/players'">
+                        <div class="action-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Gerir Jogadores</div>
+                            <div class="action-desc">Ver e gerir todos os jogadores</div>
+                        </div>
+                    </div>
+                    <% } %>
+                    
+                    <% if (canViewWithdrawals) { %>
+                    <div class="quick-action" onclick="window.location.href='/withdrawals?status=pending'">
+                        <div class="action-icon">
+                            <i class="fas fa-money-check"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Processar Levantamentos</div>
+                            <div class="action-desc"><%= financialData.pendingWithdrawals %> pendentes</div>
+                        </div>
+                    </div>
+                    <% } %>
+                    
+                    <% if (canViewSupport) { %>
+                    <div class="quick-action" onclick="window.location.href='/support?status=open'">
+                        <div class="action-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Atender Suporte</div>
+                            <div class="action-desc"><%= supportTickets.open %> tickets abertos</div>
+                        </div>
+                    </div>
+                    <% } %>
+                    
+                    <div class="quick-action" onclick="refreshDashboard()">
+                        <div class="action-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Atualizar Dashboard</div>
+                            <div class="action-desc">Buscar dados mais recentes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎰 Dashboard Essencial B7Uno - Carregado');
+            
+            // Verificação dos termos
+            const hasAccepted = localStorage.getItem('b7uno_terms_accepted');
+            const serverAccepted = <%= localAcceptedConfidentiality %>;
+            
+            if (hasAccepted === 'true' || serverAccepted) {
+                showDashboard();
+            } else {
+                showPopup();
+            }
+        });
+        
+        function showDashboard() {
+            const popup = document.getElementById('confidentialityModal');
+            const app = document.getElementById('mainApp');
+            
+            if (popup) popup.style.display = 'none';
+            if (app) app.style.display = 'flex';
+            
+            initDashboard();
+        }
+        
+        function showPopup() {
+            const popup = document.getElementById('confidentialityModal');
+            const app = document.getElementById('mainApp');
+            
+            if (popup) popup.style.display = 'flex';
+            if (app) app.style.display = 'none';
+            
+            setupPopupButtons();
+        }
+        
+        function setupPopupButtons() {
+            const acceptBtn = document.getElementById('acceptConfidentiality');
+            const rejectBtn = document.getElementById('rejectConfidentiality');
+            
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.setItem('b7uno_terms_accepted', 'true');
+                    showDashboard();
+                });
+            }
+            
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('Deseja sair do sistema?')) {
+                        window.location.href = '/logout';
+                    }
+                });
+            }
+        }
+        
+        function initDashboard() {
+            // Configurar tema
+            const savedTheme = localStorage.getItem('casinoX-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Configurar eventos
+            setupEvents();
+            
+            // Configurar exportação
+            setupExport();
+            
+            // Iniciar relógio
+            startClock();
+        }
+        
+        function setupEvents() {
+            // Toggle menu
+            const menuToggle = document.getElementById('menuToggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('overlay');
+                    
+                    if (window.innerWidth <= 1024) {
+                        sidebar.classList.toggle('active');
+                        overlay.classList.toggle('active');
+                    } else {
+                        sidebar.classList.toggle('collapsed');
+                    }
+                });
+            }
+            
+            // Theme toggles
+            document.querySelectorAll('.theme-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const newTheme = current === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('casinoX-theme', newTheme);
+                    
+                    // Atualizar labels
+                    document.querySelectorAll('#sidebarThemeLabel, #topbarThemeLabel').forEach(label => {
+                        label.textContent = newTheme === 'light' ? 'Modo Claro' : 'Modo Escuro';
+                    });
+                    
+                    showToast(`Modo ${newTheme === 'light' ? 'Claro' : 'Escuro'} ativado`, 'info');
+                });
+            });
+            
+            // User dropdown
+            const userProfile = document.getElementById('userProfile');
+            const userDropdown = document.getElementById('userDropdown');
+            if (userProfile && userDropdown) {
+                userProfile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (!userProfile.contains(e.target) && !userDropdown.contains(e.target)) {
+                        userDropdown.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Logout
+            document.querySelectorAll('#logoutBtnSidebar, #logoutBtnDropdown').forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (confirm('Deseja sair do sistema?')) {
+                            window.location.href = '/logout';
+                        }
+                    });
+                }
+            });
+            
+            // Notificações
+            const notificationBtn = document.getElementById('notificationBtn');
+            if (notificationBtn) {
+                notificationBtn.addEventListener('click', function() {
+                    const count = <%= criticalAlerts.length + safeStats.unresolvedAlerts %>;
+                    if (count > 0) {
+                        showToast(`🔔 ${count} alerta${count > 1 ? 's' : ''} encontrado${count > 1 ? 's' : ''}`, 'warning');
+                    } else {
+                        showToast('✅ Sem alertas no momento', 'success');
+                    }
+                });
+            }
+            
+            // Refresh dashboard
+            window.refreshDashboard = function() {
+                showToast('🔄 Atualizando dados...', 'info');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            };
+        }
+        
+        function setupExport() {
+            // Export Players
+            document.getElementById('exportPlayers')?.addEventListener('click', function() {
+                exportData('Detalhes Jogadores', 'players_export.csv');
+            });
+            
+            // Export Financial
+            document.getElementById('exportFinancial')?.addEventListener('click', function() {
+                exportData('Histórico Financeiro', 'financial_export.csv');
+            });
+            
+            // Export Marketing
+            document.getElementById('exportMarketing')?.addEventListener('click', function() {
+                exportData('Dados Marketing', 'marketing_export.csv');
+            });
+            
+            // Export Games
+            document.getElementById('exportGames')?.addEventListener('click', function() {
+                exportData('Performance Jogos', 'games_export.csv');
+            });
+        }
+        
+        function exportData(title, filename) {
+            showToast(`📥 Exportando ${title}...`, 'info');
+            
+            // Simular exportação
+            setTimeout(() => {
+                // Criar dados CSV de exemplo
+                const data = `Mercado,Receita,Jogadores,Depósitos,Levantamentos\nPT,15000,120,18000,3000\nBR,12000,95,15000,3000\nES,8000,70,10000,2000`;
+                const blob = new Blob([data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showToast(`✅ ${title} exportado com sucesso!`, 'success');
+            }, 1500);
+        }
+        
+        function startClock() {
+            function updateTime() {
+                const now = new Date();
+                const timeElement = document.getElementById('serverTime');
+                if (timeElement) {
+                    timeElement.textContent = now.toLocaleTimeString('pt-PT');
+                }
+                
+                // Atualizar timestamp do dashboard
+                const lastUpdate = document.getElementById('lastUpdate');
+                if (lastUpdate) {
+                    lastUpdate.textContent = now.toLocaleTimeString('pt-PT');
+                }
+            }
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+        
+        function showToast(message, type) {
+            // Remover toast anterior
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            // Criar novo toast
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                  type === 'error' ? 'exclamation-circle' : 
+                                  type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remover após 5 segundos
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        function handleAvatarError(imgElement, containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<i class="fas fa-user-tie"></i>';
+            }
+        }
+        
+        // Auto-refresh a cada 60 segundos
+        setInterval(() => {
+            console.log('🔄 Auto-refresh do dashboard');
+            // Aqui poderia fazer uma requisição para atualizar apenas os dados
+        }, 60000);
+    </script>
+</body>
+</html>

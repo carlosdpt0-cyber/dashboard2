@@ -1,0 +1,3075 @@
+<!DOCTYPE html>
+<html lang="pt" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Sistema de Email - B7Uno Casino' %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        /* ESTILOS ESPECÍFICOS PARA EMAIL - MANTIDOS DO ORIGINAL */
+        .internal-chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 600px;
+        }
+        
+        .internal-chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .internal-chat-body {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            height: calc(100% - 70px);
+        }
+        
+        .internal-staff-sidebar {
+            width: 280px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .internal-chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .internal-staff-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .internal-staff-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .internal-staff-item:hover {
+            background: var(--hover-bg);
+        }
+        
+        .internal-staff-item.active {
+            background: var(--primary-light);
+            border-color: var(--primary-color);
+        }
+        
+        .internal-staff-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .internal-staff-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .internal-staff-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .internal-staff-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .internal-staff-role {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .internal-unread-badge {
+            background: #EF4444;
+            color: white;
+            font-size: 10px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        
+        .internal-chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--body-bg);
+        }
+        
+        .internal-message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            position: relative;
+            word-wrap: break-word;
+            font-size: 13px;
+        }
+        
+        .internal-message-sent {
+            align-self: flex-end;
+            background: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .internal-message-received {
+            align-self: flex-start;
+            background: var(--card-secondary);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+        
+        .internal-message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 3px;
+            text-align: right;
+        }
+        
+        .internal-chat-input-container {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+        
+        .internal-chat-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .internal-message-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            resize: none;
+            font-family: inherit;
+            font-size: 13px;
+            height: 40px;
+            max-height: 100px;
+            outline: none;
+        }
+        
+        .internal-message-input:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .internal-send-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .internal-send-button:hover {
+            background: #0DA673;
+        }
+        
+        .internal-send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .internal-no-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .internal-no-chat-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .internal-search-box {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .internal-search-input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+        }
+        
+        .internal-search-input:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .internal-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .internal-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        
+        .internal-status-online {
+            background: #10B981;
+        }
+        
+        .internal-status-offline {
+            background: #9CA3AF;
+        }
+        
+        /* ESTILOS PARA O EMAIL EXTERNO - MANTIDOS DO ORIGINAL */
+        .email-header {
+            margin-bottom: 30px;
+        }
+        
+        .email-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .email-tab {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .email-tab:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+        
+        .email-tab.active {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+        
+        .email-tab-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            margin-left: 5px;
+        }
+        
+        .email-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .email-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h2 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 150px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .logs-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .log-item {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .log-item:hover {
+            background: var(--hover-bg);
+            border-color: var(--accent-primary);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .log-subject {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .log-status {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .status-sent {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .log-details {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .log-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+        
+        .log-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--accent-primary);
+        }
+        
+        .stat-content {
+            flex: 1;
+        }
+        
+        .stat-content h3 {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* WS Status */
+        .ws-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            margin-left: 10px;
+        }
+        
+        .ws-status.connected {
+            color: var(--success);
+        }
+        
+        .ws-status.disconnected {
+            color: var(--danger);
+        }
+        
+        .ws-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        
+        .ws-status.connected .ws-status-dot {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        .ws-status.disconnected .ws-status-dot {
+            background: var(--danger);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Typing indicator */
+        .typing-indicator {
+            padding: 10px;
+            margin: 5px 0;
+            text-align: left;
+            display: none;
+        }
+        
+        .typing-indicator.show {
+            display: block;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+        }
+        
+        .typing-dots span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            margin: 0 2px;
+            animation: typing 1.4s infinite both;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+        
+        /* New message indicator */
+        .new-message-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .new-message-indicator.show {
+            display: flex;
+            animation: slideInUp 0.3s ease;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Context menu */
+        .context-menu {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1001;
+            min-width: 150px;
+            display: none;
+        }
+        
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .context-menu-item:hover {
+            background: var(--hover-bg);
+        }
+        
+        /* Message selection */
+        .message-selected {
+            border: 1px solid var(--accent-primary) !important;
+            background: rgba(212, 175, 55, 0.1) !important;
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        .toast.success {
+            border-left-color: var(--success);
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .toast.info {
+            border-left-color: var(--info);
+        }
+        
+        .toast.hiding {
+            animation: slideOutRight 0.3s ease forwards;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Scrollbar styling */
+        .internal-chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .internal-chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .internal-chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        
+        .internal-chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+        
+        /* Responsivo */
+        @media (max-width: 1200px) {
+            .email-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .internal-chat-body {
+                flex-direction: column;
+            }
+            
+            .internal-staff-sidebar {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .internal-chat-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Container Principal - MANTENDO ESTRUTURA ORIGINAL -->
+    <div class="app-container">
+        <!-- Sidebar DO DASHBOARD -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <h2>B7Uno Casino <span class="b7uno-badge">COMUNICAÇÃO</span></h2>
+                <div class="user-mini-info">
+                    <div class="user-mini-avatar" id="sidebarAvatar">
+                        <% if (user && user.photo) { %>
+                            <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                 alt="<%= user.name %>"
+                                 onerror="handleAvatarError(this, 'sidebarAvatar')">
+                        <% } else { %>
+                            <span><%= user.name.split(' ').map(n => n[0]).join('').toUpperCase() %></span>
+                        <% } %>
+                    </div>
+                    <div class="user-mini-details">
+                        <span id="sidebarStaffName"><%= user.name %></span>
+                        <small id="sidebarStaffRole"><%= user.role %></small>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="menu">
+                <li><a href="/dashboard">
+                    <i class="fas fa-home"></i><span> Dashboard</span>
+                </a></li>
+                <li><a href="/players">
+                    <i class="fas fa-users"></i><span> Jogadores</span>
+                </a></li>
+                <li><a href="/withdrawals">
+                    <i class="fas fa-money-bill-wave"></i><span> Levantamentos</span>
+                </a></li>
+                <li><a href="/payments">
+                    <i class="fas fa-credit-card"></i><span> Pagamentos</span>
+                </a></li>
+                <li><a href="/support">
+                    <i class="fas fa-headset"></i><span> Support</span>
+                </a></li>
+                <li><a href="/staff">
+                    <i class="fas fa-user-tie"></i><span> Staff</span>
+                </a></li>
+                <li><a href="/email" class="active">
+                    <i class="fas fa-envelope"></i><span> Comunicação</span>
+                    <% if (unreadInternalCount && unreadInternalCount > 0) { %>
+                        <span class="badge" id="sidebarUnreadBadge"><%= unreadInternalCount %></span>
+                    <% } else { %>
+                        <span class="badge" id="sidebarUnreadBadge" style="display: none;">0</span>
+                    <% } %>
+                </a></li>
+                <li><a href="/logs">
+                    <i class="fas fa-clipboard-list"></i><span> Logs</span>
+                </a></li>
+                <li><a href="/settings">
+                    <i class="fas fa-cog"></i><span> Definições</span>
+                </a></li>
+                <li>
+                    <div class="theme-toggle" id="sidebarThemeToggle">
+                        <input type="checkbox" id="sidebarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="sidebarThemeLabel">Modo Escuro</span>
+                    </div>
+                </li>
+                <li>
+                    <a href="#" id="logoutBtnSidebar">
+                        <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator online"></div>
+                    <span>Sistema Online</span>
+                </div>
+                <div class="server-time" id="serverTime">--:--:--</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Topbar DO DASHBOARD -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb" id="breadcrumb">
+                        <%= breadcrumb || 'Comunicação' %>
+                    </div>
+                    <div class="ws-status disconnected" id="wsStatus">
+                        <div class="ws-status-dot"></div>
+                        <span>Offline</span>
+                    </div>
+                </div>
+                
+                <div class="topbar-right">
+                    <!-- Botão de Tema DO DASHBOARD -->
+                    <div class="theme-toggle" id="topbarThemeToggle">
+                        <input type="checkbox" id="topbarThemeCheckbox">
+                        <div class="toggle-switch"></div>
+                        <span class="theme-label" id="topbarThemeLabel">Modo Escuro</span>
+                    </div>
+
+                    <!-- Notificações DO DASHBOARD -->
+                    <div class="notifications">
+                        <button class="notification-btn" id="notificationBtn">
+                            <i class="fas fa-bell"></i>
+                            <% if (notifications && notifications.unreadCount > 0) { %>
+                                <span class="notification-count show">
+                                    <%= notifications.unreadCount > 9 ? '9+' : notifications.unreadCount %>
+                                </span>
+                            <% } %>
+                        </button>
+                    </div>
+
+                    <!-- Perfil do Usuário DO DASHBOARD -->
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">
+                            <% if (user && user.photo) { %>
+                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= user.name %>" 
+                                     id="userAvatarImage"
+                                     onerror="handleAvatarError(this, 'userAvatar')">
+                            <% } else { %>
+                                <span id="userInitials"><%= user.name.split(' ').map(n => n[0]).join('').toUpperCase() %></span>
+                            <% } %>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" id="topbarStaffName"><%= user.name %></div>
+                            <div class="user-role" id="topbarStaffRole"><%= user.role %></div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-secondary); margin-left: 5px;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Dropdown DO DASHBOARD -->
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <div class="user-info">
+                        <div class="user-avatar" id="dropdownAvatar">
+                            <% if (user && user.photo) { %>
+                                <img src="/uploads/<%= user.photo %>?t=<%= Date.now() %>" 
+                                     alt="<%= user.name %>" 
+                                     id="dropdownAvatarImage"
+                                     onerror="handleAvatarError(this, 'dropdownAvatar')">
+                            <% } else { %>
+                                <span id="dropdownInitials"><%= user.name.split(' ').map(n => n[0]).join('').toUpperCase() %></span>
+                            <% } %>
+                        </div>
+                        <div>
+                            <div class="user-name" id="dropdownUserName"><%= user.name %></div>
+                            <div class="user-role"><%= user.role %></div>
+                            <div class="user-email" style="font-size: 11px; color: var(--text-secondary);">
+                                <%= user.email %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <a href="/profile" class="dropdown-item" id="myProfileLink">
+                        <i class="fas fa-user"></i>
+                        <span>Meu Perfil</span>
+                    </a>
+                    <% if (user.role !== 'operator') { %>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Definições</span>
+                        </a>
+                        <a href="/logs" class="dropdown-item">
+                            <i class="fas fa-history"></i>
+                            <span>Histórico</span>
+                        </a>
+                    <% } %>
+                </div>
+                <div class="dropdown-footer">
+                    <button class="btn btn-secondary" id="logoutBtnDropdown">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal de Notificações DO DASHBOARD -->
+            <div class="modal" id="notificationsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-bell"></i> Notificações</h3>
+                        <button class="modal-close" id="modalClose">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="notifications-list" id="notificationsList">
+                            <div class="empty-notifications">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>Carregando notificações...</p>
+                            </div>
+                        </div>
+                        <div class="modal-actions" style="padding: 16px 24px; border-top: 1px solid var(--border-color);">
+                            <button class="btn btn-secondary" id="markAllAsReadBtn" style="width: 100%; margin-bottom: 8px;">
+                                <i class="fas fa-check-double"></i> Marcar todas como lidas
+                            </button>
+                            <button class="btn btn-secondary" id="clearAllNotificationsBtn" style="width: 100%;">
+                                <i class="fas fa-trash"></i> Limpar todas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area - MANTENDO CONTEÚDO ORIGINAL -->
+            <div class="content-area">
+                <!-- Header -->
+                <div class="email-header">
+                    <h1><i class="fas fa-envelope"></i> Sistema de Comunicação</h1>
+                    <p style="color: var(--text-secondary); font-size: 16px;">
+                        Envie emails para jogadores e comunique com a equipa interna do B7Uno Casino
+                    </p>
+                </div>
+                
+                <!-- Tabs -->
+                <div class="email-tabs">
+                    <button class="email-tab active" data-tab="external" id="externalTabBtn">
+                        <i class="fas fa-users"></i> Email para Jogadores
+                    </button>
+                    <button class="email-tab" data-tab="internal" id="internalTabBtn">
+                        <i class="fas fa-comments"></i> Chat Interno
+                        <% if (unreadInternalCount && unreadInternalCount > 0) { %>
+                            <span class="email-tab-badge" id="unreadInternalBadge"><%= unreadInternalCount %></span>
+                        <% } else { %>
+                            <span class="email-tab-badge" id="unreadInternalBadge" style="display: none;">0</span>
+                        <% } %>
+                    </button>
+                </div>
+                
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Total Jogadores</h3>
+                            <div class="stat-value" id="totalPlayersValue"><%= stats.totalPlayers || 0 %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Com Email</h3>
+                            <div class="stat-value" id="playersWithEmailValue"><%= stats.playersWithEmail || 0 %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Newsletter</h3>
+                            <div class="stat-value" id="newsletterSubscribersValue"><%= stats.newsletterSubscribers || 0 %></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo das Tabs -->
+                <div id="tabContent">
+                    <!-- Tab: Email Externo -->
+                    <div class="tab-pane active" id="externalTab">
+                        <div class="email-grid">
+                            <!-- Formulário de Email -->
+                            <div class="email-section">
+                                <div class="section-header">
+                                    <h2><i class="fas fa-paper-plane"></i> Enviar Novo Email</h2>
+                                </div>
+                                
+                                <form id="emailForm">
+                                    <div class="form-group">
+                                        <label class="form-label">Destinatários</label>
+                                        <select class="form-control" id="recipientsType" required>
+                                            <option value="">Selecione um grupo...</option>
+                                            <option value="all">Todos os jogadores</option>
+                                            <option value="newsletter">Subscritores da Newsletter</option>
+                                            <option value="vip">Jogadores VIP</option>
+                                            <option value="active">Jogadores Ativos (últimos 30 dias)</option>
+                                            <option value="custom">Selecionar Manualmente</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group" id="manualRecipientsGroup" style="display: none;">
+                                        <label class="form-label">Selecionar Jogadores</label>
+                                        <div class="recipients-grid" id="manualRecipientsList">
+                                            <!-- Jogadores carregados via JS -->
+                                            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                                <i class="fas fa-users fa-2x mb-3"></i>
+                                                <p>Selecione "Selecionar Manualmente" acima para carregar jogadores</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2" style="font-size: 12px; color: var(--text-secondary);">
+                                            <span id="selectedRecipientsCount">0</span> jogadores selecionados
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Assunto</label>
+                                        <input type="text" class="form-control" id="subject" 
+                                               placeholder="Ex: 🎰 Promoção Especial - 100% Bónus!" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Mensagem</label>
+                                        <textarea class="form-control" id="message" rows="8" 
+                                                  placeholder="Escreva a sua mensagem aqui... Pode usar HTML básico." required></textarea>
+                                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                            Dica: Use &lt;br&gt; para quebras de linha e &lt;strong&gt; para negrito
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group" style="display: flex; gap: 10px; justify-content: flex-end;">
+                                        <button type="button" class="btn btn-secondary" onclick="previewEmail()">
+                                            <i class="fas fa-eye"></i> Pré-visualizar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary" id="sendEmailBtn">
+                                            <i class="fas fa-paper-plane"></i> Enviar Email
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Histórico e Chat Interno -->
+                            <div>
+                                <!-- Histórico de Emails -->
+                                <div class="email-section">
+                                    <div class="section-header">
+                                        <h2><i class="fas fa-history"></i> Histórico de Emails</h2>
+                                        <button class="btn btn-secondary btn-sm" onclick="refreshEmailLogs()">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="logs-container" id="emailLogsContainer">
+                                        <% if (emailLogs && emailLogs.length > 0) { %>
+                                            <% for (let i = 0; i < emailLogs.length; i++) { 
+                                                const log = emailLogs[i];
+                                            %>
+                                                <div class="log-item" data-log-id="<%= log._id %>" onclick="viewEmailLog('<%= log._id %>')">
+                                                    <div class="log-header">
+                                                        <div class="log-subject"><%= log.subject %></div>
+                                                        <span class="log-status status-<%= log.status %>">
+                                                            <% if (log.status === 'sent') { %>Enviado<% } else if (log.status === 'failed') { %>Falhou<% } else if (log.status === 'pending') { %>Pendente<% } else { %><%= log.status %><% } %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="log-details">
+                                                        <%= log.message ? log.message.substring(0, 100) : '' %>...
+                                                    </div>
+                                                    <div class="log-meta">
+                                                        <span><i class="fas fa-user"></i> <%= log.sentBy ? log.sentBy.staffName : 'Sistema' %></span>
+                                                        <span><i class="fas fa-users"></i> <%= log.playersCount || 0 %> destinatários</span>
+                                                        <span><i class="fas fa-clock"></i> <%= new Date(log.sentAt).toLocaleDateString('pt-PT') %></span>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+                                        <% } else { %>
+                                            <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                                <p>Nenhum email enviado ainda</p>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <!-- Chat Interno (Mini versão) -->
+                                <div class="email-section">
+                                    <div class="section-header">
+                                        <h2><i class="fas fa-comments"></i> Chat Interno Rápido</h2>
+                                        <button class="btn btn-secondary btn-sm" onclick="refreshInternalChat()">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="internalChatMini">
+                                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                            <i class="fas fa-comments fa-2x mb-3"></i>
+                                            <p>Use a aba "Chat Interno" acima para conversar com a equipa</p>
+                                            <button class="btn btn-primary btn-sm mt-2" onclick="switchToInternalTab()">
+                                                <i class="fas fa-comments"></i> Abrir Chat
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab: Chat Interno -->
+                    <div class="tab-pane" id="internalTab" style="display: none;">
+                        <div class="internal-chat-container">
+                            <div class="internal-chat-header">
+                                <div>
+                                    <h3 style="margin: 0;"><i class="fas fa-comments"></i> Chat Interno da Equipa</h3>
+                                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                                        Comunique-se com outros membros da equipa em tempo real
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <span id="typingIndicator" style="font-size: 12px; color: var(--text-secondary); display: none;">
+                                        <i class="fas fa-pencil-alt"></i> a escrever...
+                                    </span>
+                                    <button class="btn btn-primary btn-sm" onclick="refreshStaffList()">
+                                        <i class="fas fa-sync-alt"></i> Atualizar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="internal-chat-body">
+                                <!-- Lista de Staff -->
+                                <div class="internal-staff-sidebar">
+                                    <div class="internal-search-box">
+                                        <i class="fas fa-search internal-search-icon"></i>
+                                        <input type="text" class="internal-search-input" 
+                                               placeholder="Procurar staff..."
+                                               id="internalSearchStaff">
+                                    </div>
+                                    
+                                    <div class="internal-staff-list" id="internalStaffList">
+                                        <!-- A lista de staff será carregada via JavaScript -->
+                                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                            <div class="loading-spinner"></div>
+                                            <p>Carregando membros da equipa...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Área do Chat -->
+                                <div class="internal-chat-main" id="internalChatMain">
+                                    <div class="internal-no-chat">
+                                        <div class="internal-no-chat-icon">
+                                            <i class="fas fa-comments"></i>
+                                        </div>
+                                        <h4>Selecione um membro da equipa</h4>
+                                        <p>Escolha um membro da equipa na lista à esquerda para iniciar uma conversa.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Overlay para mobile -->
+        <div class="overlay" id="overlay"></div>
+    </div>
+    
+    <!-- Modal de Pré-visualização -->
+    <div class="modal" id="previewModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Pré-visualização do Email</h3>
+                <button class="modal-close" onclick="closePreview()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-email" id="previewContent">
+                    <!-- Conteúdo inserido via JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePreview()">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New message indicator -->
+    <div class="new-message-indicator" id="newMessageIndicator" onclick="focusOnChat()">
+        <i class="fas fa-comment-alt"></i>
+        <span id="newMessageText">Nova mensagem</span>
+    </div>
+    
+    <!-- Context menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="copyMessage()">
+            <i class="fas fa-copy"></i>
+            <span>Copiar</span>
+        </div>
+        <div class="context-menu-item" onclick="deleteMessage()">
+            <i class="fas fa-trash"></i>
+            <span>Eliminar</span>
+        </div>
+    </div>
+    
+    <!-- SCRIPT COMPLETO DO EMAIL ORIGINAL -->
+    <script>
+        const currentUser = {
+            id: '<%= user.id %>',
+            name: '<%= user.name %>',
+            email: '<%= user.email %>',
+            role: '<%= user.role %>',
+            photo: '<%= user.photo %>'
+        };
+        
+        let selectedPlayers = [];
+        let manualRecipients = [];
+        let staffMembers = [];
+        let currentChatStaffId = null;
+        let currentChatStaff = null;
+        let chatSocket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        let typingTimeout = null;
+        let lastTypingTime = 0;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📧 Sistema de Comunicação B7Uno inicializado para:', currentUser.name);
+            
+            initEmailSystem();
+            initEventListeners();
+            
+            // Carregar staff inicialmente
+            loadStaffMembers();
+            
+            // Configurar tema inicial
+            const savedTheme = localStorage.getItem('casinoX-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            
+            // Atualizar estatísticas periodicamente
+            setInterval(updateStats, 30000);
+            
+            // Conectar WebSocket
+            setTimeout(() => {
+                connectWebSocket();
+            }, 1000);
+            
+            // Atualizar status como online
+            updateOnlineStatus(true);
+        });
+        
+        function initEmailSystem() {
+            setupEmailEvents();
+            updateServerTime();
+            setInterval(updateServerTime, 1000);
+            
+            updateStats();
+        }
+        
+        function initEventListeners() {
+            // Menu toggle do dashboard
+            document.getElementById('menuToggle').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('overlay');
+                
+                if (window.innerWidth <= 1024) {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                }
+            });
+            
+            // Overlay do dashboard
+            const overlay = document.getElementById('overlay');
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    document.getElementById('sidebar').classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+            
+            // Tabs
+            document.getElementById('externalTabBtn').addEventListener('click', () => switchTab('external'));
+            document.getElementById('internalTabBtn').addEventListener('click', () => {
+                switchTab('internal');
+                // Forçar recarregamento da lista ao mudar para a aba interna
+                if (staffMembers.length === 0) {
+                    loadStaffMembers();
+                }
+            });
+            
+            // Theme toggle do dashboard
+            document.querySelectorAll('.theme-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const newTheme = current === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('casinoX-theme', newTheme);
+                    
+                    document.querySelectorAll('.theme-toggle').forEach(t => {
+                        t.setAttribute('data-theme', newTheme);
+                    });
+                    
+                    document.querySelectorAll('.theme-label').forEach(label => {
+                        label.textContent = newTheme === 'light' ? 'Modo Claro' : 'Modo Escuro';
+                    });
+                });
+            });
+            
+            // User dropdown do dashboard
+            const userProfile = document.getElementById('userProfile');
+            const userDropdown = document.getElementById('userDropdown');
+            if (userProfile && userDropdown) {
+                userProfile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                // Fechar ao clicar fora
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
+            
+            // Logout buttons do dashboard
+            const logoutBtns = document.querySelectorAll('#logoutBtnSidebar, #logoutBtnDropdown');
+            logoutBtns.forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (confirm('Deseja sair do sistema?')) {
+                            window.location.href = '/logout';
+                        }
+                    });
+                }
+            });
+            
+            // Notifications do dashboard
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationsModal = document.getElementById('notificationsModal');
+            const modalClose = document.getElementById('modalClose');
+            const markAllAsReadBtn = document.getElementById('markAllAsReadBtn');
+            const clearAllNotificationsBtn = document.getElementById('clearAllNotificationsBtn');
+            
+            if (notificationBtn && notificationsModal) {
+                notificationBtn.addEventListener('click', function() {
+                    notificationsModal.style.display = 'flex';
+                    loadNotifications();
+                });
+            }
+            
+            if (modalClose) {
+                modalClose.addEventListener('click', function() {
+                    notificationsModal.style.display = 'none';
+                });
+            }
+            
+            if (notificationsModal) {
+                notificationsModal.addEventListener('click', function(e) {
+                    if (e.target === notificationsModal) {
+                        notificationsModal.style.display = 'none';
+                    }
+                });
+            }
+            
+            if (markAllAsReadBtn) {
+                markAllAsReadBtn.addEventListener('click', markAllAsRead);
+            }
+            
+            if (clearAllNotificationsBtn) {
+                clearAllNotificationsBtn.addEventListener('click', clearAllNotifications);
+            }
+        }
+        
+        // ==============================
+        // WEBSOCKET FUNCTIONS (ORIGINAL)
+        // ==============================
+        
+        function connectWebSocket() {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                return;
+            }
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            chatSocket = new WebSocket(wsUrl);
+            
+            chatSocket.onopen = function() {
+                console.log('✅ WebSocket conectado para chat');
+                updateWebSocketStatus(true);
+                reconnectAttempts = 0;
+                
+                // Conectar usuário ao chat
+                if (currentUser && currentUser.id) {
+                    chatSocket.send(JSON.stringify({
+                        type: 'chat_connect',
+                        userId: currentUser.id
+                    }));
+                }
+            };
+            
+            chatSocket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('Erro ao processar mensagem WebSocket:', error);
+                }
+            };
+            
+            chatSocket.onerror = function(error) {
+                console.error('❌ Erro no WebSocket:', error);
+                updateWebSocketStatus(false);
+            };
+            
+            chatSocket.onclose = function() {
+                console.log('❌ WebSocket desconectado');
+                updateWebSocketStatus(false);
+                
+                // Tentar reconectar
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    setTimeout(() => {
+                        console.log(`🔄 Tentando reconectar (${reconnectAttempts}/${maxReconnectAttempts})...`);
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+        }
+        
+        function updateWebSocketStatus(connected) {
+            const wsStatus = document.getElementById('wsStatus');
+            if (wsStatus) {
+                wsStatus.className = `ws-status ${connected ? 'connected' : 'disconnected'}`;
+                wsStatus.innerHTML = `
+                    <div class="ws-status-dot"></div>
+                    <span>${connected ? 'Online' : 'Offline'}</span>
+                `;
+            }
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'chat_message':
+                    handleIncomingMessage(data);
+                    break;
+                    
+                case 'messages_read':
+                    handleMessagesRead(data);
+                    break;
+                    
+                case 'staff_online':
+                    handleStaffOnline(data);
+                    break;
+                    
+                case 'staff_offline':
+                    handleStaffOffline(data);
+                    break;
+                    
+                case 'typing':
+                    handleTypingIndicator(data);
+                    break;
+                    
+                case 'chat_sent':
+                    // Confirmação de mensagem enviada
+                    console.log('✅ Mensagem enviada com sucesso:', data.messageId);
+                    break;
+            }
+        }
+        
+        function handleIncomingMessage(data) {
+            console.log('📨 Nova mensagem recebida:', data);
+            
+            // Se a mensagem é para a conversa atual
+            if (currentChatStaffId && data.senderId === currentChatStaffId) {
+                // Adicionar mensagem à interface
+                const chatMessages = document.getElementById('internalChatMessages');
+                if (chatMessages) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'internal-message internal-message-received';
+                    const time = new Date(data.timestamp).toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+                    messageDiv.innerHTML = `
+                        <div>${escapeHtml(data.message)}</div>
+                        <div class="internal-message-time">${time}</div>
+                    `;
+                    chatMessages.appendChild(messageDiv);
+                    scrollToBottomInternal();
+                    
+                    // Marcar como lida
+                    sendTypingStatus(false);
+                    markMessagesAsRead(currentChatStaffId);
+                }
+            } else if (data.senderId !== currentUser.id) {
+                // Mostrar notificação de nova mensagem
+                showNewMessageNotification(data.senderName, data.message);
+            }
+            
+            // Atualizar contador de não lidas
+            updateUnreadCountBadge();
+        }
+        
+        function handleStaffOnline(data) {
+            // Atualizar status online na lista
+            const staffItem = document.querySelector(`[data-staff-id="${data.staffId}"]`);
+            if (staffItem) {
+                const statusDot = staffItem.querySelector('.internal-status-dot');
+                if (statusDot) {
+                    statusDot.className = 'internal-status-dot internal-status-online';
+                    const roleText = staffItem.querySelector('.internal-staff-role');
+                    if (roleText) {
+                        roleText.innerHTML = roleText.innerHTML.replace('Offline', 'Online');
+                    }
+                }
+            }
+        }
+        
+        function handleStaffOffline(data) {
+            // Atualizar status offline na lista
+            const staffItem = document.querySelector(`[data-staff-id="${data.staffId}"]`);
+            if (staffItem) {
+                const statusDot = staffItem.querySelector('.internal-status-dot');
+                if (statusDot) {
+                    statusDot.className = 'internal-status-dot internal-status-offline';
+                    const roleText = staffItem.querySelector('.internal-staff-role');
+                    if (roleText) {
+                        roleText.innerHTML = roleText.innerHTML.replace('Online', 'Offline');
+                    }
+                }
+            }
+        }
+        
+        function handleMessagesRead(data) {
+            // Opcional: implementar visual feedback
+            console.log('Mensagens lidas por:', data.readerId);
+        }
+        
+        function handleTypingIndicator(data) {
+            if (currentChatStaffId && data.senderId === currentChatStaffId) {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    if (data.isTyping) {
+                        typingIndicator.style.display = 'block';
+                        setTimeout(() => {
+                            typingIndicator.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        typingIndicator.style.display = 'none';
+                    }
+                }
+            }
+        }
+        
+        function sendTypingStatus(isTyping) {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN && currentChatStaffId) {
+                chatSocket.send(JSON.stringify({
+                    type: 'typing',
+                    recipientId: currentChatStaffId,
+                    isTyping: isTyping
+                }));
+            }
+        }
+        
+        function markMessagesAsRead(staffId) {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    type: 'mark_read',
+                    senderId: staffId
+                }));
+            }
+        }
+        
+        function showNewMessageNotification(senderName, message) {
+            const indicator = document.getElementById('newMessageIndicator');
+            const text = document.getElementById('newMessageText');
+            
+            if (indicator && text) {
+                text.textContent = `${senderName}: ${message.substring(0, 30)}...`;
+                indicator.classList.add('show');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 10000);
+            }
+        }
+        
+        function focusOnChat() {
+            const internalTabBtn = document.getElementById('internalTabBtn');
+            if (internalTabBtn) {
+                switchTab('internal');
+                const indicator = document.getElementById('newMessageIndicator');
+                if (indicator) {
+                    indicator.classList.remove('show');
+                }
+            }
+        }
+        
+        // ==============================
+        // CHAT FUNCTIONS (ORIGINAL)
+        // ==============================
+        
+        async function loadStaffMembers() {
+            try {
+                const staffList = document.getElementById('internalStaffList');
+                if (staffList) {
+                    staffList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            <div class="loading-spinner"></div>
+                            <p>Carregando membros da equipa...</p>
+                        </div>
+                    `;
+                }
+                
+                console.log('🔄 Carregando lista de staff...');
+                const response = await fetch('/api/chat/staff');
+                const data = await response.json();
+                
+                if (data.success && data.staffMembers) {
+                    staffMembers = data.staffMembers;
+                    console.log('✅ Staff carregado:', staffMembers.length, 'membros');
+                    updateStaffList();
+                    
+                    // Se estamos na aba interna e não há staff selecionado, selecionar o primeiro
+                    const internalTab = document.getElementById('internalTab');
+                    if (internalTab && internalTab.style.display !== 'none' && staffMembers.length > 0 && !currentChatStaffId) {
+                        const firstStaff = staffMembers.find(staff => staff._id !== currentUser.id);
+                        if (firstStaff) {
+                            setTimeout(() => {
+                                selectInternalStaff(firstStaff._id, firstStaff.name, firstStaff.role, firstStaff.photo || '');
+                            }, 500);
+                        }
+                    }
+                } else {
+                    console.error('❌ Erro ao carregar staff:', data.error);
+                    showToast('Erro ao carregar membros da equipa: ' + (data.error || 'Desconhecido'), 'error');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar staff:', error);
+                showToast('Erro de conexão ao carregar membros da equipa', 'error');
+                
+                const staffList = document.getElementById('internalStaffList');
+                if (staffList) {
+                    staffList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <p>Erro ao carregar lista</p>
+                            <button class="btn btn-secondary btn-sm mt-2" onclick="loadStaffMembers()">
+                                <i class="fas fa-redo"></i> Tentar novamente
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function updateStaffList() {
+            const staffList = document.getElementById('internalStaffList');
+            if (!staffList) return;
+            
+            if (staffMembers.length === 0) {
+                staffList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-user-friends fa-2x mb-3"></i>
+                        <p>Nenhum membro da equipa encontrado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredStaff = staffMembers.filter(staff => staff._id !== currentUser.id);
+            
+            if (filteredStaff.length === 0) {
+                staffList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-user-friends fa-2x mb-3"></i>
+                        <p>Você é o único membro da equipa</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            staffList.innerHTML = filteredStaff.map(staff => {
+                const isOnline = staff.isOnline || false;
+                const unreadCount = staff.unreadCount || 0;
+                const isActive = staff._id === currentChatStaffId;
+                const initials = staff.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                return `
+                    <div class="internal-staff-item ${isActive ? 'active' : ''}" 
+                         data-staff-id="${staff._id}"
+                         onclick="selectInternalStaff('${staff._id}', '${escapeHtml(staff.name)}', '${escapeHtml(staff.role)}', '${staff.photo || ''}')">
+                        <div class="internal-staff-avatar">
+                            ${staff.photo ? 
+                                `<img src="/uploads/${staff.photo}?t=${Date.now()}" 
+                                     alt="${escapeHtml(staff.name)}"
+                                     onerror="this.parentElement.innerHTML='${initials}'">` : 
+                                `<span>${initials}</span>`
+                            }
+                        </div>
+                        <div class="internal-staff-info">
+                            <div class="internal-staff-name">${escapeHtml(staff.name)}</div>
+                            <div class="internal-staff-role">
+                                <span class="internal-status-dot ${isOnline ? 'internal-status-online' : 'internal-status-offline'}"></span>
+                                ${escapeHtml(staff.role)} • ${isOnline ? 'Online' : 'Offline'}
+                            </div>
+                        </div>
+                        ${unreadCount > 0 ? `<div class="internal-unread-badge">${unreadCount}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Adicionar pesquisa em tempo real
+            const searchInput = document.getElementById('internalSearchStaff');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const items = staffList.querySelectorAll('.internal-staff-item');
+                    
+                    items.forEach(item => {
+                        const name = item.querySelector('.internal-staff-name').textContent.toLowerCase();
+                        const role = item.querySelector('.internal-staff-role').textContent.toLowerCase();
+                        
+                        if (name.includes(searchTerm) || role.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        }
+        
+        function selectInternalStaff(staffId, staffName, staffRole, staffPhoto) {
+            if (!staffId || staffId === currentUser.id) {
+                showToast('Não pode enviar mensagens para si mesmo', 'warning');
+                return;
+            }
+            
+            console.log('👤 Selecionando staff:', staffName);
+            currentChatStaffId = staffId;
+            currentChatStaff = {
+                _id: staffId,
+                name: staffName,
+                role: staffRole,
+                photo: staffPhoto
+            };
+            
+            // Atualizar UI para mostrar staff selecionado
+            document.querySelectorAll('.internal-staff-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-staff-id') === staffId) {
+                    item.classList.add('active');
+                    
+                    // Remover badge de mensagens não lidas
+                    const badge = item.querySelector('.internal-unread-badge');
+                    if (badge) {
+                        badge.remove();
+                        updateUnreadCountBadge();
+                    }
+                }
+            });
+            
+            // Atualizar área do chat
+            updateChatArea();
+            
+            // Carregar mensagens
+            loadInternalMessages(staffId);
+            
+            // Marcar mensagens como lidas
+            markInternalMessagesAsRead(staffId);
+            
+            // Focar no input de mensagem
+            setTimeout(() => {
+                const input = document.getElementById('internalMessageInput');
+                if (input) {
+                    input.focus();
+                    input.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+        
+        function updateChatArea() {
+            const chatMain = document.getElementById('internalChatMain');
+            if (!chatMain || !currentChatStaff) return;
+            
+            const initials = currentChatStaff.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            chatMain.innerHTML = `
+                <div style="padding: 15px; border-bottom: 1px solid var(--border-color); background: var(--card-bg);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="internal-staff-avatar">
+                                ${currentChatStaff.photo ? 
+                                    `<img src="/uploads/${currentChatStaff.photo}?t=${Date.now()}" 
+                                         alt="${escapeHtml(currentChatStaff.name)}"
+                                         onerror="this.innerHTML='${initials}'">` : 
+                                    `<span>${initials}</span>`
+                                }
+                            </div>
+                            <div>
+                                <h4 style="margin: 0;">${escapeHtml(currentChatStaff.name)}</h4>
+                                <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">
+                                    ${escapeHtml(currentChatStaff.role)}
+                                </p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshChatMessages()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mensagens -->
+                <div class="internal-chat-messages" id="internalChatMessages">
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+                
+                <!-- Input de mensagem -->
+                <div class="internal-chat-input-container">
+                    <div class="internal-chat-input">
+                        <textarea class="internal-message-input" 
+                               id="internalMessageInput"
+                               placeholder="Escreva a sua mensagem..."
+                               rows="1"
+                               oninput="handleMessageInput()"
+                               onkeydown="handleInternalMessageKey(event)"></textarea>
+                        <button class="internal-send-button" onclick="sendInternalMessage()" id="internalSendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Configurar auto-expand do textarea
+            const textarea = document.getElementById('internalMessageInput');
+            if (textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                });
+            }
+        }
+        
+        async function loadInternalMessages(staffId) {
+            try {
+                const chatMessages = document.getElementById('internalChatMessages');
+                if (!chatMessages) return;
+                
+                chatMessages.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div class="loading-spinner"></div>
+                    </div>
+                `;
+                
+                console.log(`📨 Carregando mensagens com staff ${staffId}...`);
+                const response = await fetch(`/api/chat/messages/${staffId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log(`✅ ${data.messages ? data.messages.length : 0} mensagens carregadas`);
+                    
+                    if (data.messages && data.messages.length > 0) {
+                        chatMessages.innerHTML = data.messages.map(msg => {
+                            const isSent = msg.senderId === currentUser.id;
+                            const time = new Date(msg.timestamp).toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+                            
+                            return `
+                                <div class="internal-message ${isSent ? 'internal-message-sent' : 'internal-message-received'}"
+                                     data-message-id="${msg._id}"
+                                     data-sender-id="${msg.senderId}"
+                                     onclick="showMessageContext(event, '${msg._id}')">
+                                    <div>${escapeHtml(msg.message)}</div>
+                                    <div class="internal-message-time">${time}</div>
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        scrollToBottomInternal();
+                    } else {
+                        chatMessages.innerHTML = `
+                            <div class="internal-no-chat">
+                                <div class="internal-no-chat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <h4>Iniciar Conversa</h4>
+                                <p>Comece uma conversa enviando uma mensagem abaixo.</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.error('❌ Erro ao carregar mensagens:', data.error);
+                    showToast('Erro ao carregar mensagens: ' + (data.error || 'Desconhecido'), 'error');
+                    
+                    chatMessages.innerHTML = `
+                        <div class="internal-no-chat">
+                            <div class="internal-no-chat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h4>Erro ao carregar mensagens</h4>
+                            <p>${data.error || 'Tente novamente mais tarde'}</p>
+                            <button class="btn btn-secondary btn-sm mt-2" onclick="loadInternalMessages('${staffId}')">
+                                <i class="fas fa-redo"></i> Tentar novamente
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar mensagens:', error);
+                showToast('Erro de conexão com o servidor', 'error');
+                
+                const chatMessages = document.getElementById('internalChatMessages');
+                if (chatMessages) {
+                    chatMessages.innerHTML = `
+                        <div class="internal-no-chat">
+                            <div class="internal-no-chat-icon">
+                                <i class="fas fa-wifi-slash"></i>
+                            </div>
+                            <h4>Sem conexão</h4>
+                            <p>Verifique sua conexão com a internet.</p>
+                            <button class="btn btn-secondary btn-sm mt-2" onclick="loadInternalMessages('${staffId}')">
+                                <i class="fas fa-redo"></i> Tentar novamente
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function handleMessageInput() {
+            const now = Date.now();
+            if (now - lastTypingTime > 1000) { // Enviar status a cada segundo
+                sendTypingStatus(true);
+                lastTypingTime = now;
+            }
+            
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+            
+            typingTimeout = setTimeout(() => {
+                sendTypingStatus(false);
+            }, 3000);
+        }
+        
+        async function sendInternalMessage() {
+            if (!currentChatStaffId) {
+                showToast('Por favor, selecione um membro da equipa primeiro', 'warning');
+                return;
+            }
+            
+            const messageInput = document.getElementById('internalMessageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                showToast('Por favor, escreva uma mensagem', 'warning');
+                return;
+            }
+            
+            // Limitar tamanho da mensagem
+            if (message.length > 1000) {
+                showToast('Mensagem muito longa (máx. 1000 caracteres)', 'warning');
+                return;
+            }
+            
+            const sendButton = document.getElementById('internalSendButton');
+            
+            if (sendButton) {
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            try {
+                console.log(`📤 Enviando mensagem para ${currentChatStaffId}: ${message.substring(0, 50)}...`);
+                
+                // Parar indicador de digitação
+                sendTypingStatus(false);
+                
+                // Enviar via WebSocket primeiro para velocidade
+                if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                    chatSocket.send(JSON.stringify({
+                        type: 'chat_message',
+                        recipientId: currentChatStaffId,
+                        message: message
+                    }));
+                }
+                
+                // Enviar via HTTP para persistência
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipientId: currentChatStaffId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Erro ao enviar mensagem');
+                }
+                
+                console.log('✅ Mensagem enviada com sucesso');
+                
+                // Adicionar mensagem localmente para feedback imediato
+                const chatMessages = document.getElementById('internalChatMessages');
+                const noChatDiv = chatMessages.querySelector('.internal-no-chat');
+                if (noChatDiv) {
+                    noChatDiv.remove();
+                }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'internal-message internal-message-sent';
+                const time = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+                messageDiv.innerHTML = `
+                    <div>${escapeHtml(message)}</div>
+                    <div class="internal-message-time">${time}</div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                
+                // Limpar input e resetar altura
+                messageInput.value = '';
+                messageInput.style.height = '40px';
+                messageInput.focus();
+                
+                scrollToBottomInternal();
+                
+                // Mostrar confirmação
+                showToast('Mensagem enviada', 'success');
+                
+            } catch (error) {
+                console.error('❌ Erro ao enviar mensagem:', error);
+                
+                // Mostrar mensagem de erro na interface
+                const chatMessages = document.getElementById('internalChatMessages');
+                if (chatMessages) {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'internal-message internal-message-sent';
+                    errorMessage.style.backgroundColor = 'var(--danger-color)';
+                    const time = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+                    errorMessage.innerHTML = `
+                        <div><i class="fas fa-exclamation-triangle"></i> Falha ao enviar: ${escapeHtml(message.substring(0, 100))}</div>
+                        <div class="internal-message-time">${time}</div>
+                    `;
+                    chatMessages.appendChild(errorMessage);
+                    scrollToBottomInternal();
+                }
+                
+                showToast('Falha ao enviar mensagem: ' + error.message, 'error');
+                
+            } finally {
+                if (sendButton) {
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                }
+            }
+        }
+        
+        function handleInternalMessageKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendInternalMessage();
+            }
+        }
+        
+        async function markInternalMessagesAsRead(staffId) {
+            try {
+                await fetch(`/api/chat/mark-read/${staffId}`, {
+                    method: 'POST'
+                });
+                
+                updateUnreadCountBadge();
+                
+            } catch (error) {
+                console.error('Erro ao marcar mensagens como lidas:', error);
+            }
+        }
+        
+        function scrollToBottomInternal() {
+            const chatMessages = document.getElementById('internalChatMessages');
+            if (chatMessages) {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            }
+        }
+        
+        function showMessageContext(event, messageId) {
+            event.preventDefault();
+            hideContextMenu();
+            
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.dataset.messageId = messageId;
+            
+            // Selecionar mensagem
+            document.querySelectorAll('.internal-message').forEach(msg => {
+                msg.classList.remove('message-selected');
+            });
+            event.currentTarget.classList.add('message-selected');
+        }
+        
+        function hideContextMenu() {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'none';
+            
+            // Deselecionar todas as mensagens
+            document.querySelectorAll('.internal-message').forEach(msg => {
+                msg.classList.remove('message-selected');
+            });
+        }
+        
+        function copyMessage() {
+            const contextMenu = document.getElementById('contextMenu');
+            const messageId = contextMenu.dataset.messageId;
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            
+            if (messageElement) {
+                const messageText = messageElement.querySelector('div').textContent;
+                navigator.clipboard.writeText(messageText).then(() => {
+                    showToast('Mensagem copiada para a área de transferência', 'success');
+                });
+            }
+            
+            hideContextMenu();
+        }
+        
+        async function deleteMessage() {
+            const contextMenu = document.getElementById('contextMenu');
+            const messageId = contextMenu.dataset.messageId;
+            
+            if (confirm('Tem certeza que deseja eliminar esta mensagem?')) {
+                try {
+                    const response = await fetch(`/api/chat/message/${messageId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+                        if (messageElement) {
+                            messageElement.remove();
+                            showToast('Mensagem eliminada', 'success');
+                        }
+                    } else {
+                        showToast('Erro ao eliminar mensagem: ' + data.error, 'error');
+                    }
+                } catch (error) {
+                    console.error('Erro ao eliminar mensagem:', error);
+                    showToast('Erro ao eliminar mensagem', 'error');
+                }
+            }
+            
+            hideContextMenu();
+        }
+        
+        function updateUnreadCountBadge() {
+            // Atualizar via API para obter contagem correta
+            fetch('/api/chat/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const count = data.count || 0;
+                        
+                        // Atualizar badge na aba
+                        const tabBadge = document.getElementById('unreadInternalBadge');
+                        if (tabBadge) {
+                            if (count > 0) {
+                                tabBadge.textContent = count;
+                                tabBadge.style.display = 'inline-block';
+                            } else {
+                                tabBadge.style.display = 'none';
+                            }
+                        }
+                        
+                        // Atualizar badge na sidebar
+                        const sidebarBadge = document.getElementById('sidebarUnreadBadge');
+                        if (sidebarBadge) {
+                            if (count > 0) {
+                                sidebarBadge.textContent = count;
+                                sidebarBadge.style.display = 'inline-block';
+                            } else {
+                                sidebarBadge.style.display = 'none';
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar contador de não lidas:', error);
+                });
+        }
+        
+        function refreshStaffList() {
+            console.log('🔄 Atualizando lista de staff...');
+            loadStaffMembers();
+            showToast('Lista de staff atualizada', 'info');
+        }
+        
+        function refreshChatMessages() {
+            if (currentChatStaffId) {
+                console.log('🔄 Atualizando mensagens do chat...');
+                loadInternalMessages(currentChatStaffId);
+                showToast('Mensagens atualizadas', 'info');
+            } else {
+                showToast('Selecione um membro da equipa primeiro', 'warning');
+            }
+        }
+        
+        function refreshInternalChat() {
+            refreshStaffList();
+        }
+        
+        async function updateOnlineStatus(isOnline) {
+            try {
+                await fetch('/api/chat/update-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        isOnline: isOnline
+                    })
+                });
+            } catch (error) {
+                console.error('Erro ao atualizar status:', error);
+            }
+        }
+        
+        // ==============================
+        // EMAIL FUNCTIONS (ORIGINAL)
+        // ==============================
+        
+        function updateThemeButton(theme) {
+            const themeLabels = document.querySelectorAll('.theme-label');
+            themeLabels.forEach(label => {
+                label.textContent = theme === 'dark' ? 'Modo Escuro' : 'Modo Claro';
+            });
+        }
+        
+        function switchTab(tabId) {
+            // Update tab buttons
+            document.querySelectorAll('.email-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Show tab content
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.style.display = 'none';
+            });
+            
+            if (tabId === 'external') {
+                document.getElementById('externalTab').style.display = 'block';
+            } else if (tabId === 'internal') {
+                document.getElementById('internalTab').style.display = 'block';
+                
+                // Load staff if needed
+                if (staffMembers.length === 0) {
+                    loadStaffMembers();
+                }
+                
+                // Connect WebSocket if not connected
+                if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+                    connectWebSocket();
+                }
+            }
+        }
+        
+        function switchToInternalTab() {
+            switchTab('internal');
+        }
+        
+        function setupEmailEvents() {
+            const recipientsType = document.getElementById('recipientsType');
+            if (recipientsType) {
+                recipientsType.addEventListener('change', function() {
+                    const type = this.value;
+                    toggleManualRecipients(type === 'custom');
+                    
+                    if (type && type !== 'custom') {
+                        loadRecipientsByType(type);
+                    }
+                });
+            }
+            
+            const emailForm = document.getElementById('emailForm');
+            if (emailForm) {
+                emailForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    sendEmail();
+                });
+            }
+        }
+        
+        function toggleManualRecipients(show) {
+            const manualGroup = document.getElementById('manualRecipientsGroup');
+            if (manualGroup) {
+                manualGroup.style.display = show ? 'block' : 'none';
+                if (show && manualRecipients.length === 0) {
+                    loadAllPlayers();
+                }
+            }
+        }
+        
+        async function loadAllPlayers() {
+            try {
+                const response = await fetch('/api/email/recipients/all');
+                const data = await response.json();
+                
+                if (data.success && data.players) {
+                    manualRecipients = data.players;
+                    updateManualRecipientsList();
+                } else {
+                    showToast('Erro ao carregar jogadores', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar jogadores:', error);
+                showToast('Erro de conexão ao carregar jogadores', 'error');
+            }
+        }
+        
+        async function loadRecipientsByType(type) {
+            try {
+                const response = await fetch(`/api/email/recipients/${type}`);
+                const data = await response.json();
+                
+                if (data.success && data.players) {
+                    manualRecipients = data.players;
+                    updateManualRecipientsList();
+                    
+                    // Auto-selecionar todos se não for custom
+                    if (type !== 'custom') {
+                        selectedPlayers = manualRecipients.map(p => p._id);
+                        updateManualRecipientsList();
+                        showToast(`${data.players.length} jogadores selecionados`, 'success');
+                    }
+                } else {
+                    showToast(data.error || 'Erro ao carregar destinatários', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar destinatários:', error);
+                showToast('Erro de conexão com o servidor', 'error');
+            }
+        }
+        
+        function updateManualRecipientsList() {
+            const container = document.getElementById('manualRecipientsList');
+            if (!container) return;
+            
+            if (manualRecipients.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-users-slash fa-2x mb-3"></i>
+                        <p>Nenhum jogador encontrado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = manualRecipients.map(player => {
+                const isSelected = selectedPlayers.includes(player._id);
+                const initials = getPlayerInitials(player);
+                const displayName = getPlayerDisplayName(player);
+                
+                return `
+                    <div class="recipient-item ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleRecipient('${player._id}')">
+                        <div class="recipient-avatar">${initials}</div>
+                        <div class="recipient-info">
+                            <div class="recipient-name">${escapeHtml(displayName)}</div>
+                            <div class="recipient-email">${escapeHtml(player.email || 'Sem email')}</div>
+                        </div>
+                        <div class="recipient-check">
+                            ${isSelected ? '<i class="fas fa-check"></i>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateSelectedCount();
+        }
+        
+        function getPlayerInitials(player) {
+            if (player.firstName) {
+                return escapeHtml(player.firstName[0].toUpperCase());
+            } else if (player.username) {
+                return escapeHtml(player.username[0].toUpperCase());
+            } else if (player.email) {
+                return escapeHtml(player.email[0].toUpperCase());
+            }
+            return '?';
+        }
+        
+        function getPlayerDisplayName(player) {
+            if (player.firstName && player.lastName) {
+                return `${player.firstName} ${player.lastName}`;
+            } else if (player.firstName) {
+                return player.firstName;
+            } else if (player.username) {
+                return player.username;
+            } else if (player.email) {
+                return player.email.split('@')[0];
+            }
+            return 'Jogador';
+        }
+        
+        function toggleRecipient(playerId) {
+            const index = selectedPlayers.indexOf(playerId);
+            if (index === -1) {
+                selectedPlayers.push(playerId);
+            } else {
+                selectedPlayers.splice(index, 1);
+            }
+            
+            updateManualRecipientsList();
+        }
+        
+        function updateSelectedCount() {
+            const countElement = document.getElementById('selectedRecipientsCount');
+            if (countElement) {
+                countElement.textContent = selectedPlayers.length;
+            }
+        }
+        
+        async function sendEmail() {
+            const recipientsType = document.getElementById('recipientsType').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            
+            if (!recipientsType) {
+                showToast('Por favor, selecione um grupo de destinatários', 'warning');
+                return;
+            }
+            
+            if (!subject || !message) {
+                showToast('Por favor, preencha o assunto e a mensagem', 'warning');
+                return;
+            }
+            
+            if (recipientsType === 'custom' && selectedPlayers.length === 0) {
+                showToast('Por favor, selecione pelo menos um jogador', 'warning');
+                return;
+            }
+            
+            const sendBtn = document.getElementById('sendEmailBtn');
+            const originalText = sendBtn.innerHTML;
+            
+            sendBtn.innerHTML = '<span class="loading"></span> A enviar...';
+            sendBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipients: recipientsType === 'custom' ? selectedPlayers : recipientsType,
+                        subject: subject,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    
+                    // Reset form
+                    document.getElementById('emailForm').reset();
+                    selectedPlayers = [];
+                    updateSelectedCount();
+                    document.getElementById('recipientsType').value = '';
+                    document.getElementById('manualRecipientsGroup').style.display = 'none';
+                    
+                    refreshEmailLogs();
+                    updateStats();
+                    
+                } else {
+                    showToast(result.error || 'Erro ao enviar email', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro de conexão com o servidor', 'error');
+            } finally {
+                sendBtn.innerHTML = originalText;
+                sendBtn.disabled = false;
+            }
+        }
+        
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/email/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalPlayersValue').textContent = data.totalPlayers || 0;
+                    document.getElementById('playersWithEmailValue').textContent = data.playersWithEmail || 0;
+                    document.getElementById('newsletterSubscribersValue').textContent = data.newsletterSubscribers || 0;
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar estatísticas:', error);
+            }
+        }
+        
+        function previewEmail() {
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            
+            if (!subject || !message) {
+                showToast('Por favor, preencha o assunto e a mensagem primeiro', 'warning');
+                return;
+            }
+            
+            const previewContent = `
+                <div class="preview-header">
+                    <h2>B7Uno Casino</h2>
+                </div>
+                <h3 style="color: #D4AF37; margin-bottom: 20px;">${escapeHtml(subject)}</h3>
+                <div class="preview-content">${message.replace(/\n/g, '<br>')}</div>
+                <div class="preview-footer">
+                    <p><strong>Esta é uma mensagem automática do B7Uno Casino.</strong></p>
+                    <p>Para questões, contacte o nosso suporte: support@b7uno.com</p>
+                    <p><small>© ${new Date().getFullYear()} B7Uno Casino. Todos os direitos reservados.</small></p>
+                </div>
+            `;
+            
+            document.getElementById('previewContent').innerHTML = previewContent;
+            document.getElementById('previewModal').style.display = 'flex';
+        }
+        
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+        
+        async function refreshEmailLogs() {
+            try {
+                const response = await fetch('/api/email/logs');
+                const data = await response.json();
+                
+                if (data.success && data.logs) {
+                    const container = document.getElementById('emailLogsContainer');
+                    container.innerHTML = data.logs.map(log => `
+                        <div class="log-item" onclick="viewEmailLog('${log._id}')">
+                            <div class="log-header">
+                                <div class="log-subject">${escapeHtml(log.subject)}</div>
+                                <span class="log-status status-${log.status}">
+                                    ${log.status === 'sent' ? 'Enviado' : 
+                                      log.status === 'failed' ? 'Falhou' : 
+                                      log.status === 'pending' ? 'Pendente' : log.status}
+                                </span>
+                            </div>
+                            <div class="log-details">
+                                ${escapeHtml((log.message || '').substring(0, 100))}...
+                            </div>
+                            <div class="log-meta">
+                                <span><i class="fas fa-user"></i> ${escapeHtml(log.sentBy ? log.sentBy.staffName : 'Sistema')}</span>
+                                <span><i class="fas fa-users"></i> ${log.playersCount || 0} destinatários</span>
+                                <span><i class="fas fa-clock"></i> ${new Date(log.sentAt).toLocaleDateString('pt-PT')}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar logs:', error);
+                showToast('Erro ao carregar histórico de emails', 'error');
+            }
+        }
+        
+        function viewEmailLog(logId) {
+            alert('Visualizar detalhes do email: ' + logId);
+        }
+        
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                const data = await response.json();
+                
+                updateNotificationCount(data.unreadCount || 0);
+                renderNotifications(data.notifications || []);
+            } catch (error) {
+                console.error('Erro ao carregar notificações:', error);
+                renderMockNotifications();
+            }
+        }
+        
+        function updateNotificationCount(count) {
+            const notificationCount = document.querySelector('.notification-count');
+            if (notificationCount) {
+                if (count > 0) {
+                    notificationCount.textContent = count > 99 ? '99+' : count;
+                    notificationCount.classList.add('show');
+                } else {
+                    notificationCount.classList.remove('show');
+                }
+            }
+        }
+        
+        function renderNotifications(notifications) {
+            const notificationsList = document.getElementById('notificationsList');
+            if (!notificationsList) return;
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="empty-notifications">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>Sem notificações no momento</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            notifications.forEach(notification => {
+                const timeAgo = getTimeAgo(notification.createdAt);
+                const unreadClass = notification.read ? '' : 'unread';
+                
+                html += `
+                    <div class="notification-item ${unreadClass}" data-id="${notification._id}">
+                        <div class="notification-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            notificationsList.innerHTML = html;
+        }
+        
+        function renderMockNotifications() {
+            const mockNotifications = [
+                {
+                    _id: '1',
+                    title: 'Novo Staff Registado',
+                    message: 'João Silva foi adicionado como membro da equipa de suporte.',
+                    read: false,
+                    createdAt: new Date(Date.now() - 300000).toISOString()
+                },
+                {
+                    _id: '2',
+                    title: 'Acesso Suspeito',
+                    message: 'Tentativa de login falhada da conta de administrador.',
+                    read: true,
+                    createdAt: new Date(Date.now() - 3600000).toISOString()
+                }
+            ];
+            
+            const unreadCount = mockNotifications.filter(n => !n.read).length;
+            updateNotificationCount(unreadCount);
+            renderNotifications(mockNotifications);
+        }
+        
+        function markAllAsRead() {
+            // Implementar funcionalidade de marcar todas como lidas
+            showToast('Todas as notificações marcadas como lidas', 'success');
+        }
+        
+        function clearAllNotifications() {
+            if (confirm('Tem certeza que deseja limpar todas as notificações?')) {
+                showToast('Todas as notificações foram limpas', 'success');
+            }
+        }
+        
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Agora mesmo';
+            if (diffMins < 60) return `Há ${diffMins} min`;
+            if (diffHours < 24) return `Há ${diffHours} h`;
+            if (diffDays < 7) return `Há ${diffDays} d`;
+            return date.toLocaleDateString('pt-PT');
+        }
+        
+        function showToast(message, type = 'info') {
+            // Remove existing toasts
+            document.querySelectorAll('.toast').forEach(toast => {
+                toast.remove();
+            });
+            
+            // Create new toast
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            else if (type === 'error') icon = 'exclamation-circle';
+            else if (type === 'warning') icon = 'exclamation-triangle';
+            
+            toast.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+        
+        function updateServerTime() {
+            const now = new Date();
+            const element = document.getElementById('serverTime');
+            if (element) {
+                element.textContent = now.toLocaleTimeString('pt-PT');
+            }
+        }
+        
+        function handleAvatarError(imgElement, containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                container.innerHTML = `<span>${initials}</span>`;
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Add loading spinner CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .loading-spinner {
+                width: 30px;
+                height: 30px;
+                border: 3px solid var(--border-color);
+                border-top: 3px solid var(--accent-primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .loading {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255,255,255,.3);
+                border-radius: 50%;
+                border-top-color: #fff;
+                animation: spin 1s ease-in-out infinite;
+                margin-right: 8px;
+            }
+            
+            .recipient-item {
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            
+            .recipient-item:hover {
+                background: var(--hover-bg);
+            }
+            
+            .recipient-item.selected {
+                background: rgba(212, 175, 55, 0.1);
+                border-color: var(--accent-primary);
+            }
+            
+            .recipient-avatar {
+                width: 32px;
+                height: 32px;
+                background: rgba(212, 175, 55, 0.1);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--accent-primary);
+                font-weight: bold;
+                margin-right: 10px;
+                flex-shrink: 0;
+            }
+            
+            .recipient-info {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .recipient-name {
+                font-weight: 600;
+                font-size: 13px;
+                color: var(--text-primary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .recipient-email {
+                font-size: 11px;
+                color: var(--text-secondary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .recipient-check {
+                width: 20px;
+                height: 20px;
+                border: 2px solid var(--border-color);
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 10px;
+                flex-shrink: 0;
+            }
+            
+            .recipient-item.selected .recipient-check {
+                background: var(--accent-primary);
+                border-color: var(--accent-primary);
+                color: white;
+            }
+            
+            .mt-2 { margin-top: 8px; }
+            .mb-3 { margin-bottom: 12px; }
+        `;
+        document.head.appendChild(style);
+        
+        // ==============================
+        // WINDOW EVENT LISTENERS
+        // ==============================
+        
+        window.addEventListener('beforeunload', function() {
+            // Atualizar status como offline ao sair
+            updateOnlineStatus(false);
+            
+            // Fechar WebSocket
+            if (chatSocket) {
+                chatSocket.close();
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePreview();
+                hideContextMenu();
+            }
+        });
+        
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('previewModal');
+            if (e.target === modal) {
+                closePreview();
+            }
+        });
+        
+        // Atualizar status periodicamente
+        setInterval(() => {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                updateOnlineStatus(true);
+            }
+        }, 60000); // A cada minuto
+        
+        // Atualizar contador de não lidas periodicamente
+        setInterval(updateUnreadCountBadge, 30000); // A cada 30 segundos
+		
+		// Adiciona event listeners para todos os staff items
+		document.addEventListener('click', function(e) {
+			const staffItem = e.target.closest('.internal-staff-item');
+			if (staffItem) {
+				const staffId = staffItem.getAttribute('data-staff-id');
+				const staffName = staffItem.querySelector('.internal-staff-name').textContent;
+				const staffRole = staffItem.querySelector('.internal-staff-role').textContent;
+				selectInternalStaff(staffId, staffName, staffRole, '');
+			}
+		});
+    </script>
+</body>
+</html>
